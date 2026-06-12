@@ -236,6 +236,10 @@ input,textarea,select{font-family:inherit;font-size:inherit}
 .seg button.sel{border-color:var(--gold);background:var(--gold-dim);color:var(--gold-soft)}
 .attach-chip{display:inline-flex;align-items:center;gap:8px;font-family:var(--fm);font-size:11px;color:var(--gold-soft);background:var(--gold-dim);border-radius:999px;padding:4px 12px;margin-left:8px}
 
+.favstar{font-size:18px;color:var(--dim);transition:color .15s,transform .15s;flex-shrink:0}
+.favstar:hover{transform:scale(1.15)}
+.favstar.on{color:var(--gold)}
+
 .docrow{display:flex;align-items:center;gap:14px;padding:15px 22px;border-bottom:1px solid var(--line-soft)}
 .docrow:last-child{border-bottom:none}
 .doc-ic{width:36px;height:44px;border-radius:4px;background:var(--panel-2);border:1px solid var(--line);flex-shrink:0;display:grid;place-items:center;font-family:var(--fm);font-size:8px;color:var(--dim);letter-spacing:.08em}
@@ -527,6 +531,9 @@ footer.app-foot button:hover,footer.app-foot a:hover{color:var(--mut)}
           <button class="btn gold sm" onclick="llSend()">Send</button>
         </div>
       </div>
+
+      <div class="section-label">Trusted trades</div>
+      <div class="card" id="ll-trades"></div>
 
       <div class="section-label">Certificates <span class="cta"><button onclick="openCertModal()">+ Upload a certificate</button></span></div>
       <div class="card"><table class="tbl" id="cert-tbl"></table></div>
@@ -844,6 +851,47 @@ footer.app-foot button:hover,footer.app-foot a:hover{color:var(--mut)}
   </div>
 </div>
 
+<!-- Direct dispatch modal (landlord: send existing issue to a trusted trade) -->
+<div class="overlay" id="direct-overlay" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Send to a trusted trade</h3>
+      <p id="direct-job"></p>
+    </div>
+    <div class="modal-body">
+      <div id="direct-list"></div>
+      <div class="modal-foot" style="margin-top:16px"><button class="btn line" onclick="closeModal('direct-overlay')">Cancel</button></div>
+      <p style="font-size:11px;color:var(--dim);margin-top:12px">The trade is appointed directly — no open tender. They quote as usual and you accept to book.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Appoint trade for a new job modal (landlord) -->
+<div class="overlay" id="appoint-overlay" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Appoint for a job</h3>
+      <p id="appoint-sub"></p>
+    </div>
+    <div class="modal-body">
+      <div class="field"><label for="apt-prop">Property</label><select id="apt-prop"></select></div>
+      <div class="field"><label for="apt-title">What needs doing?</label><input id="apt-title" placeholder="e.g. Annual boiler service"></div>
+      <div class="field"><label for="apt-desc">Detail (optional)</label><textarea id="apt-desc" placeholder="Anything the trade should know before quoting"></textarea></div>
+      <div class="field"><label>How urgent?</label>
+        <div class="seg" id="apt-seg">
+          <button class="sel" onclick="pickSeg(this,'apt-seg')">Routine</button>
+          <button onclick="pickSeg(this,'apt-seg')">Soon</button>
+          <button onclick="pickSeg(this,'apt-seg')">Urgent</button>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn line" onclick="closeModal('appoint-overlay')">Cancel</button>
+        <button class="btn gold" onclick="confirmAppoint()">Appoint trade</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Edit trade profile modal -->
 <div class="overlay" id="prof-overlay" role="dialog" aria-modal="true">
   <div class="modal">
@@ -977,15 +1025,25 @@ function seed(){
       {stars:5, text:'Fitted a new boiler in a day, left the place spotless. Certificate uploaded before he\'d left the drive.', by:'Landlord · Stonehaven', at:'2026-05-10'},
       {stars:5, text:'Came out same day for a leak. Kept the tenant informed the whole way.', by:'Landlord · Westhill', at:'2026-04-22'},
     ],
+    trades:seedTrades(),
     notifs:{landlord:[], tenant:[], trade:[]},
     hiddenJobs:[],
     seq:100,
   };
 }
 
+/* The landlord's directory of trades they have worked with (the "trusted trades" book) */
+function seedTrades(){
+  return [
+    {id:'t1', name:'Gordon Burnett Plumbing & Heating', trade:'Plumbing & Heating', rating:4.9, fav:true, jobs:3, lastUsed:'2026-06-06'},
+    {id:'t2', name:'Watts Electrical', trade:'Electrical', rating:4.8, fav:true, jobs:1, lastUsed:'2026-03-02'},
+    {id:'t3', name:'Deeside Roofing & Gutters', trade:'Roofing', rating:4.6, fav:false, jobs:1, lastUsed:'2025-11-14'},
+  ];
+}
+
 let D;
 function load(){
-  try{ const raw=localStorage.getItem(STORE_KEY); if(raw){ const d=JSON.parse(raw); if(d && d.v===1){ D=d; return; } } }catch(e){}
+  try{ const raw=localStorage.getItem(STORE_KEY); if(raw){ const d=JSON.parse(raw); if(d && d.v===1){ D=d; if(!D.trades) D.trades=seedTrades(); return; } } }catch(e){}
   D=seed();
 }
 function save(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(D)); }catch(e){ /* storage full or unavailable — app keeps working in memory */ } }
@@ -1180,8 +1238,8 @@ function renderCerts(){
 }
 function issueCardLL(i){
   let a='';
-  if(i.status==='reported')a=`<button class="btn gold sm" onclick="sendToTrades('${i.id}')">Send to trades</button><button class="btn line sm" onclick="llThread('tenant')">Message tenant</button>`;
-  if(i.status==='sent')a=`<span class="pill gold"><span class="d"></span>Waiting for quotes — 3 trades notified</span>`;
+  if(i.status==='reported')a=`<button class="btn gold sm" onclick="sendToTrades('${i.id}')">Send to trades</button><button class="btn line sm" onclick="openDirect('${i.id}')">★ Send to a trusted trade</button><button class="btn line sm" onclick="llThread('tenant')">Message tenant</button>`;
+  if(i.status==='sent')a=i.directTo?`<span class="pill gold"><span class="d"></span>Appointed directly — ${esc(i.directTo)}, waiting for their quote</span>`:`<span class="pill gold"><span class="d"></span>Waiting for quotes — 3 trades notified</span>`;
   if(i.status==='quoted')a=`<div class="quotebox">Quote <strong>£${i.quote}</strong> — ${esc(i.trade)} · ${esc(i.when)}${i.quoteNote?` · <span style="color:var(--mut)">${esc(i.quoteNote)}</span>`:''}<button class="btn gold sm" onclick="acceptQuote('${i.id}')">Accept &amp; book</button></div>`;
   if(i.status==='booked')a=`<span class="pill ok"><span class="d"></span>Booked — ${esc(i.trade)} · ${esc(i.when)} · £${i.quote}</span>`;
   if(i.status==='done')a=`<span class="pill ok"><span class="d"></span>Completed by ${esc(i.trade)} · invoice £${i.invoiceAmt||i.quote}</span>${i.review?`<span class="pill gold">Reviewed ${'★'.repeat(i.review.stars)}</span>`:`<button class="btn line sm" onclick="openReview('${i.id}')">Leave a review</button>`}`;
@@ -1229,11 +1287,12 @@ function ledgerHTML(entries){
 function renderLedger(){ $('ledger').innerHTML=ledgerHTML(D.ledger.filter(e=>e.propId==='p1').slice(0,8)); }
 function renderJobs(){
   $('tr-jobs-label').textContent=`Jobs near you — ${D.profile.area.split(' ')[0]} · ${D.profile.radius} mi`;
-  const open=D.issues.filter(i=>(i.status==='sent'||i.status==='quoted') && !D.hiddenJobs.includes(i.id));
+  const open=D.issues.filter(i=>(i.status==='sent'||i.status==='quoted') && !D.hiddenJobs.includes(i.id) && (!i.directTo || i.directTo===D.profile.biz));
   $('tr-jobs').innerHTML=open.length?open.map(j=>{
     const prop=D.props.find(p=>p.id===j.propId);
-    return `<div class="job"><div class="jt">${esc(j.title)} ${urgPill(j.urgency)}${j.status==='quoted'?'<span class="pill gold">Your quote sent</span>':''}</div>
-      <div class="jm">Aberdeen · ${prop?prop.dist:1.0} mi · verified landlord · no lead fee</div>
+    const direct=j.directTo===D.profile.biz;
+    return `<div class="job"><div class="jt">${esc(j.title)} ${urgPill(j.urgency)}${direct?'<span class="pill gold">★ Direct appointment</span>':''}${j.status==='quoted'?'<span class="pill gold">Your quote sent</span>':''}</div>
+      <div class="jm">${direct?'This landlord chose you — not an open tender':'Aberdeen · '+(prop?prop.dist:1.0)+' mi · verified landlord'} · no lead fee</div>
       <div class="jd">${esc(j.desc)}</div>
       ${j.photos&&j.photos.length?`<div class="photo-thumbs">${j.photos.map(p=>`<img src="${p}" alt="Issue photo">`).join('')}</div>`:''}
       <div class="issue-actions">${j.status==='sent'
@@ -1272,6 +1331,17 @@ function renderTradeProf(){
       <div style="font-size:11.5px;color:var(--dim);margin-top:4px">${esc(r.by)} · ${fmtD(r.at).slice(3)}</div>
     </div>`).join('');
 }
+function renderTrades(){
+  const sorted=[...D.trades].sort((a,b)=>(b.fav-a.fav) || new Date(b.lastUsed)-new Date(a.lastUsed));
+  $('ll-trades').innerHTML=sorted.length?sorted.map(t=>`
+    <div class="docrow">
+      <button class="favstar ${t.fav?'on':''}" onclick="toggleFav('${t.id}')" title="${t.fav?'Remove from favourites':'Mark as favourite'}" aria-label="Favourite">${t.fav?'★':'☆'}</button>
+      <div class="flex1"><div class="dn">${esc(t.name)}</div>
+      <div class="dm">${esc(t.trade)} · ★ ${t.rating} · ${t.jobs} job${t.jobs===1?'':'s'} with you · last used ${fmtD(t.lastUsed)}</div></div>
+      <button class="btn gold sm" onclick="openAppoint('${t.id}')">Appoint</button>
+    </div>`).join('')
+    :`<div class="empty"><div class="ei">★</div>Trades you work with appear here after their first completed job — mark favourites to re-appoint them in one click.</div>`;
+}
 function renderTenancy(){
   const p=D.props.find(x=>x.id==='p1');
   $('tn-tenancy').innerHTML=`
@@ -1292,7 +1362,7 @@ function renderChats(){
   $('tr-chat').innerHTML=D.msgs.ltr.map(m=>bub(m,'trade')).join('');
   ['ll-chat','tn-chat','tr-chat'].forEach(id=>{const el=$(id); el.scrollTop=el.scrollHeight;});
 }
-function renderAll(){ renderPortfolio(); renderRentLL(); renderRentTN(); renderCerts(); renderLLIssues(); renderTNIssues(); renderDocs(); renderLedger(); renderJobs(); renderChats(); renderTradeProf(); renderTenancy(); save(); }
+function renderAll(){ renderPortfolio(); renderRentLL(); renderRentTN(); renderCerts(); renderLLIssues(); renderTNIssues(); renderDocs(); renderLedger(); renderJobs(); renderChats(); renderTradeProf(); renderTrades(); renderTenancy(); save(); }
 
 /* ===== Property detail ===== */
 const PTABS=['Ledger','Certificates','Documents','Rent','Issues','Tenancy'];
@@ -1415,6 +1485,59 @@ function sendToTrades(id){
   toast('3 matching trades notified — switch to the Trade view to quote.');
 }
 function hideJob(id){ D.hiddenJobs.push(id); renderJobs(); save(); toast('Job hidden from your board.'); }
+
+/* ===== Trusted trades ===== */
+function toggleFav(id){
+  const t=D.trades.find(x=>x.id===id); if(!t)return;
+  t.fav=!t.fav; renderTrades(); save();
+  toast(t.fav?`${t.name} marked as a favourite.`:`${t.name} removed from favourites.`);
+}
+function openDirect(issueId){
+  const i=D.issues.find(x=>x.id===issueId); if(!i)return;
+  T.directIssueId=issueId;
+  const prop=D.props.find(p=>p.id===i.propId);
+  $('direct-job').textContent=`${i.title} — ${prop?prop.addr:''}`;
+  const sorted=[...D.trades].sort((a,b)=>(b.fav-a.fav) || new Date(b.lastUsed)-new Date(a.lastUsed));
+  $('direct-list').innerHTML=sorted.map(t=>`
+    <div class="docrow" style="padding:13px 0">
+      <span class="favstar ${t.fav?'on':''}" style="cursor:default">${t.fav?'★':'☆'}</span>
+      <div class="flex1"><div class="dn">${esc(t.name)}</div>
+      <div class="dm">${esc(t.trade)} · ★ ${t.rating} · ${t.jobs} job${t.jobs===1?'':'s'} with you</div></div>
+      <button class="btn gold sm" onclick="dispatchDirect('${t.id}')">Send</button>
+    </div>`).join('');
+  openModal('direct-overlay');
+}
+function dispatchDirect(tradeId){
+  const i=D.issues.find(x=>x.id===T.directIssueId); const t=D.trades.find(x=>x.id===tradeId);
+  if(!i||!t)return;
+  i.status='sent'; i.directTo=t.name;
+  t.lastUsed=nowISO().slice(0,10);
+  ledger(i.propId,'Landlord',`<strong>${esc(i.title)}</strong> appointed directly to ${esc(t.name)} — trusted trade`);
+  if(t.name===D.profile.biz) notify('trade', `Direct appointment from Moira Fraser: "${i.title}" — quote in the app`);
+  closeModal('direct-overlay'); renderAll();
+  toast(`Sent directly to ${t.name} — no open tender.`);
+}
+function openAppoint(tradeId){
+  const t=D.trades.find(x=>x.id===tradeId); if(!t)return;
+  T.appointTradeId=tradeId;
+  $('appoint-sub').textContent=`${t.name} — ${t.trade} · ★ ${t.rating}`;
+  fillPropSelect($('apt-prop'), false);
+  $('apt-title').value=''; $('apt-desc').value='';
+  openModal('appoint-overlay');
+}
+function confirmAppoint(){
+  const t=D.trades.find(x=>x.id===T.appointTradeId); if(!t)return;
+  const title=$('apt-title').value.trim();
+  if(!title){ toast('Say what needs doing first'); $('apt-title').focus(); return; }
+  const propId=$('apt-prop').value;
+  const desc=$('apt-desc').value.trim()||'Appointed directly by the landlord.';
+  D.issues.unshift({id:uid('i'), propId, title, desc, tenant:'Landlord request', urgency:segVal('apt-seg'), status:'sent', directTo:t.name, reportedAt:nowISO(), photos:[]});
+  t.lastUsed=nowISO().slice(0,10);
+  ledger(propId,'Landlord',`<strong>${esc(title)}</strong> appointed directly to ${esc(t.name)} — trusted trade`);
+  if(t.name===D.profile.biz) notify('trade', `Direct appointment from Moira Fraser: "${title}" — quote in the app`);
+  closeModal('appoint-overlay'); renderAll();
+  toast(`Appointed — ${t.name} has been asked to quote.`);
+}
 function openQuote(id){
   const i=D.issues.find(x=>x.id===id); if(!i)return;
   T.quoteId=id;
@@ -1454,6 +1577,8 @@ function confirmComplete(){
   const amt=parseInt($('c-amt').value,10)||i.quote;
   i.status='done'; i.invoiceAmt=amt; i.completedAt=nowISO();
   if(T.completePhoto) i.photos=(i.photos||[]).concat([T.completePhoto]);
+  const dirEntry=D.trades.find(t=>t.name===i.trade);
+  if(dirEntry){ dirEntry.jobs++; dirEntry.lastUsed=nowISO().slice(0,10); }
   const note=$('c-note').value.trim();
   ledger(i.propId,'Trade',`Work completed: <strong>${esc(i.title)}</strong> — invoice £${amt}${note?` · ${esc(note)}`:''} filed by ${esc(i.trade)}`);
   notify('landlord', `"${i.title}" completed — invoice £${amt} filed by ${i.trade}`);
