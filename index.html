@@ -1049,6 +1049,9 @@ function ring(score){
   const col=score>=90?'var(--ok)':score>=80?'var(--warn)':'var(--due)';
   return `<div class="ring"><svg width="60" height="60"><circle cx="30" cy="30" r="${r}" fill="none" stroke="var(--line)" stroke-width="4.5"/><circle cx="30" cy="30" r="${r}" fill="none" stroke="${col}" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${off}"/></svg><div class="rv">${score}</div></div>`;
 }
+/* Google Maps top-down (satellite) view of an address — t=k forces aerial imagery */
+const mapURL = addr => `https://maps.google.com/?q=${encodeURIComponent(addr+', Scotland')}&t=k`;
+const mapLink = (addr, label) => `<a class="btn line sm" style="text-decoration:none" href="${mapURL(addr)}" target="_blank" rel="noopener" title="Top-down map view — opens Google Maps">◎ ${label||'Map'}</a>`;
 const FLOW=['reported','sent','quoted','booked','done'];
 const FLABEL={reported:'Reported',sent:'Sent to trades',quoted:'Quote in',booked:'Booked',done:'Complete'};
 function stepper(st){const i=FLOW.indexOf(st);return `<div class="steps">${FLOW.map((s,k)=>`<div class="step ${k<i?'done':k===i?'now done':''}"><div class="sd"></div><div class="sl">${FLABEL[s]}</div></div>`).join('')}</div>`;}
@@ -1118,7 +1121,10 @@ function renderPortfolio(){
         <div class="addr">${esc(p.addr)}</div><div class="ten">${p.tenant?`${esc(p.tenant)} · since ${MONS[new Date(p.tenantSince).getMonth()]} ${new Date(p.tenantSince).getFullYear()}`:'Vacant · advertised'}</div>
         <div class="prop-tags">${tags.map(t=>`<span class="pill ${t[0]}"><span class="d"></span>${esc(t[1])}</span>`).join('')}</div>
       </div>
-      <button class="btn line sm" onclick="openProp('${p.id}')">View</button>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:stretch">
+        <button class="btn line sm" style="justify-content:center" onclick="openProp('${p.id}')">View</button>
+        ${mapLink(p.addr)}
+      </div>
     </div>`;
   }).join('');
 }
@@ -1240,7 +1246,7 @@ function renderJobs(){
     const prop=D.props.find(p=>p.id===j.propId);
     return `<div class="job"><div class="jt">${esc(j.title)}</div>
       <div class="jm">${esc(prop?prop.addr.split(',')[0]:'')} · ${esc(j.when)} · agreed £${j.quote}</div>
-      <div class="issue-actions"><button class="btn gold sm" onclick="openComplete('${j.id}')">Mark complete &amp; file invoice</button><button class="btn line sm" onclick="document.getElementById('tr-msg').focus()">Message</button></div></div>`;
+      <div class="issue-actions"><button class="btn gold sm" onclick="openComplete('${j.id}')">Mark complete &amp; file invoice</button>${mapLink(prop?prop.addr:'Aberdeen')}<button class="btn line sm" onclick="document.getElementById('tr-msg').focus()">Message</button></div></div>`;
   }).join('')
     :`<div class="empty"><div class="ei">🗓</div>Nothing booked in yet.</div>`;
 }
@@ -1270,6 +1276,7 @@ function renderTenancy(){
   const p=D.props.find(x=>x.id==='p1');
   $('tn-tenancy').innerHTML=`
     <div class="kv"><span class="k">Tenancy type</span><span class="v">Private Residential Tenancy</span></div>
+    <div class="kv"><span class="k">Location</span><span class="v"><a href="${mapURL(p.addr)}" target="_blank" rel="noopener" style="color:var(--gold-soft)">Top-down map view ↗</a></span></div>
     <div class="kv"><span class="k">Began</span><span class="v">${fmtD(p.tenantSince)}</span></div>
     <div class="kv"><span class="k">Rent</span><span class="v">£${p.rent} / month · due 1st</span></div>
     <div class="kv"><span class="k">Landlord</span><span class="v">Moira Fraser</span></div>
@@ -1294,7 +1301,8 @@ function renderProp(){
   const {score,factors}=scoreOf(p.id);
   $('prop-head').innerHTML=`<div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap">${ring(score)}
     <div><div style="font-family:var(--fd);font-size:26px;font-weight:300">${esc(p.addr)}</div>
-    <div style="font-size:13.5px;color:var(--mut);margin-top:3px">${p.tenant?`${esc(p.tenant)} · Private Residential Tenancy since ${fmtD(p.tenantSince)}`:'Vacant · advertised'}</div></div></div>`;
+    <div style="font-size:13.5px;color:var(--mut);margin-top:3px">${p.tenant?`${esc(p.tenant)} · Private Residential Tenancy since ${fmtD(p.tenantSince)}`:'Vacant · advertised'}</div></div>
+    <div style="margin-left:auto">${mapLink(p.addr,'View on map')}</div></div>`;
   $('prop-tabs').innerHTML=PTABS.map(t=>`<button class="${T.propTab===t?'on':''}" onclick="T.propTab='${t}';renderProp()">${t}</button>`).join('');
   let body='';
   if(T.propTab==='Ledger'){
