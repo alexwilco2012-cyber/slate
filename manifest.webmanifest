@@ -1,0 +1,14 @@
+{
+  "name": "Slate — The record every home deserves",
+  "short_name": "Slate",
+  "description": "A tenancy's entire life — signatures, certificates, repairs, rent and conversations — on one shared, time-stamped record.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#FCFBF7",
+  "theme_color": "#FCFBF7",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

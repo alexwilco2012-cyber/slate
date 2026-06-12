@@ -1,0 +1,1688 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#FCFBF7">
+<meta name="description" content="Slate puts a tenancy's entire life — signatures, certificates, repairs, rent and conversations — on one shared, time-stamped record.">
+<title>Slate — The record every home deserves</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&family=Archivo:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FCFBF7; --panel:#FFFFFF; --panel-2:#F6F4EE; --line:#E5E1D6; --line-soft:#EDEAE1;
+  --bone:#1B1B1E; --mut:#6C685E; --dim:#A09B8E;
+  --gold:#A07E33; --gold-soft:#8A6B27; --gold-dim:rgba(160,126,51,.10);
+  --ok:#2E7D52; --ok-bg:rgba(46,125,82,.10); --warn:#996D12; --warn-bg:rgba(153,109,18,.11); --due:#B5483A; --due-bg:rgba(181,72,58,.10);
+  --r:14px; --rs:9px;
+  --fd:'Fraunces',Georgia,serif; --fb:'Archivo',-apple-system,sans-serif; --fm:'Spline Sans Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--fb);background:var(--bg);color:var(--bone);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer;border:none;background:none;font-size:inherit;color:inherit}
+input,textarea,select{font-family:inherit;font-size:inherit}
+::selection{background:var(--gold);color:#fff}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:4px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
+/* ===== Topbar ===== */
+.topbar{position:sticky;top:0;z-index:50;background:rgba(252,251,247,.85);backdrop-filter:blur(14px);border-bottom:1px solid var(--line-soft)}
+.topbar-inner{max-width:1240px;margin:0 auto;padding:0 28px;display:flex;align-items:center;gap:22px;height:66px}
+.brand{font-family:var(--fd);font-size:23px;font-weight:500;letter-spacing:.01em;display:flex;align-items:center;gap:10px;color:var(--bone)}
+.brand .mark{width:18px;height:18px;border:1.5px solid var(--gold);transform:rotate(45deg);position:relative;flex-shrink:0}
+.brand .mark::after{content:"";position:absolute;inset:4px;background:var(--gold)}
+.nav-links{margin-left:auto;display:flex;align-items:center;gap:26px;font-size:13.5px;font-weight:500;color:var(--mut)}
+.nav-links a{color:var(--mut);text-decoration:none;transition:color .15s}
+.nav-links a:hover{color:var(--bone)}
+.role-switch{margin-left:auto;display:flex;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:4px;gap:2px}
+.role-switch button{padding:7px 17px;border-radius:999px;color:var(--mut);font-weight:600;font-size:13px;transition:all .18s;position:relative}
+.role-switch button:hover{color:var(--bone)}
+.role-switch button.active{background:var(--gold);color:#fff}
+.pip{position:absolute;top:3px;right:7px;width:7px;height:7px;border-radius:50%;background:var(--due);border:1.5px solid #fff;opacity:0;transform:scale(.5);transition:all .2s}
+.pip.on{opacity:1;transform:scale(1)}
+.exit-demo{font-size:12.5px;color:var(--dim);font-weight:600;white-space:nowrap}
+.exit-demo:hover{color:var(--mut)}
+
+/* bell */
+.bell{position:relative;width:38px;height:38px;border:1px solid var(--line);border-radius:50%;display:grid;place-items:center;font-size:15px;color:var(--mut);background:var(--panel);transition:all .15s;flex-shrink:0}
+.bell:hover{border-color:var(--gold);color:var(--gold-soft)}
+.bell .bn{position:absolute;top:-4px;right:-4px;min-width:17px;height:17px;border-radius:999px;background:var(--due);color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center;padding:0 4px;opacity:0;transform:scale(.5);transition:all .2s}
+.bell .bn.on{opacity:1;transform:scale(1)}
+.notif-panel{position:fixed;top:72px;right:max(16px,calc((100vw - 1240px)/2 + 28px));width:340px;max-width:92vw;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:0 20px 60px rgba(27,24,16,.18);z-index:90;display:none;overflow:hidden;animation:pop .2s ease}
+.notif-panel.open{display:block}
+.notif-panel .nh{padding:13px 18px;border-bottom:1px solid var(--line-soft);font-family:var(--fm);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}
+.notif-panel .ni{padding:12px 18px;border-bottom:1px solid var(--line-soft);font-size:13px}
+.notif-panel .ni:last-child{border-bottom:none}
+.notif-panel .ni .nt{font-family:var(--fm);font-size:10px;color:var(--dim);margin-top:3px;letter-spacing:.05em}
+.notif-panel .nempty{padding:26px 18px;text-align:center;color:var(--dim);font-size:13px}
+
+/* ===== Buttons ===== */
+.btn{display:inline-flex;align-items:center;gap:9px;font-weight:600;font-size:13.5px;padding:11px 22px;border-radius:999px;transition:all .18s;letter-spacing:.01em}
+.btn.gold{background:var(--gold);color:#fff}
+.btn.gold:hover{background:#8A6B27}
+.btn.line{border:1px solid var(--line);color:var(--bone)}
+.btn.line:hover{border-color:var(--gold);color:var(--gold-soft)}
+.btn.sm{padding:7px 15px;font-size:12.5px}
+.btn:disabled{opacity:.4;cursor:default}
+
+/* ============================================================
+   LANDING
+============================================================ */
+.land-section{max-width:1240px;margin:0 auto;padding:0 28px}
+.hero{padding:110px 0 90px;display:grid;grid-template-columns:1.1fr .9fr;gap:70px;align-items:center}
+@media(max-width:980px){.hero{grid-template-columns:1fr;padding:64px 0 60px;gap:46px}}
+.eyebrow{font-family:var(--fm);font-size:11px;letter-spacing:.26em;text-transform:uppercase;color:var(--gold);display:flex;align-items:center;gap:14px}
+.eyebrow::before{content:"";width:34px;height:1px;background:var(--gold)}
+.hero h1{font-family:var(--fd);font-weight:300;font-size:clamp(42px,5.4vw,68px);line-height:1.04;letter-spacing:-.015em;margin-top:22px}
+.hero h1 em{font-style:italic;font-weight:400;color:var(--gold-soft)}
+.hero .lede{margin-top:24px;font-size:17px;line-height:1.65;color:var(--mut);max-width:480px}
+.hero .ctas{margin-top:36px;display:flex;gap:14px;flex-wrap:wrap}
+.hero .trustline{margin-top:30px;font-family:var(--fm);font-size:11.5px;color:var(--dim);letter-spacing:.06em}
+
+/* hero ledger card */
+.hero-card{--bg:#101113;--panel:#16171A;--panel-2:#1D1E22;--line:#2B2C32;--line-soft:#222328;--bone:#ECE7DC;--mut:#9A968B;--dim:#75716A;--gold:#C8AE7B;--gold-soft:#E2D0A4;--gold-dim:rgba(200,174,123,.14);
+  background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:26px 28px;color:var(--bone);box-shadow:0 30px 70px rgba(27,24,16,.28);position:relative}
+.hero-card::before{content:"12 ROSEMOUNT PLACE · ABERDEEN";font-family:var(--fm);font-size:10px;letter-spacing:.2em;color:var(--dim)}
+.hero-card .hc-title{font-family:var(--fd);font-size:20px;font-weight:400;margin:8px 0 18px}
+.ledger{position:relative;padding-left:26px}
+.ledger::before{content:"";position:absolute;left:5px;top:12px;bottom:12px;width:1px;background:linear-gradient(var(--gold) 0%,var(--line) 100%)}
+.ledger-item{position:relative;padding:9px 0;opacity:1}
+.ledger-item::before{content:"";position:absolute;left:-25.5px;top:15px;width:10px;height:10px;border-radius:50%;background:var(--bg);border:2px solid var(--gold)}
+.ledger-item.muted::before{border-color:var(--line)}
+.ledger-item .lt{font-family:var(--fm);font-size:10.5px;color:var(--dim);letter-spacing:.05em}
+.ledger-item .lx{font-size:13px;margin-top:2px;color:var(--bone)}
+.ledger-item .lx strong{font-weight:600;color:var(--gold-soft)}
+.ledger-item .lwho{font-size:10px;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.12em;margin-top:3px}
+.hero-card .ledger-item{animation:rise .6s ease both}
+.hero-card .ledger-item:nth-child(1){animation-delay:.2s}
+.hero-card .ledger-item:nth-child(2){animation-delay:.45s}
+.hero-card .ledger-item:nth-child(3){animation-delay:.7s}
+.hero-card .ledger-item:nth-child(4){animation-delay:.95s}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* sections */
+.land-block{padding:90px 0;border-top:1px solid var(--line-soft)}
+.land-head{max-width:680px}
+.land-head h2{font-family:var(--fd);font-weight:300;font-size:clamp(30px,3.6vw,44px);line-height:1.1;letter-spacing:-.01em;margin-top:20px}
+.land-head h2 em{font-style:italic;color:var(--gold-soft)}
+.land-head p{margin-top:18px;color:var(--mut);font-size:16px;line-height:1.65}
+.roles-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line-soft);border:1px solid var(--line-soft);margin-top:54px}
+@media(max-width:860px){.roles-grid{grid-template-columns:1fr}}
+.role-cell{background:var(--bg);padding:38px 32px;position:relative;transition:background .25s}
+.role-cell:hover{background:var(--panel)}
+.role-cell .rc-no{font-family:var(--fm);font-size:11px;color:var(--gold);letter-spacing:.2em}
+.role-cell h3{font-family:var(--fd);font-weight:400;font-size:24px;margin-top:14px}
+.role-cell p{color:var(--mut);font-size:14px;line-height:1.65;margin-top:12px}
+.role-cell ul{list-style:none;margin-top:18px;display:flex;flex-direction:column;gap:8px}
+.role-cell li{font-size:13.5px;color:var(--bone);display:flex;gap:10px;align-items:baseline}
+.role-cell li::before{content:"·";color:var(--gold);font-weight:700;font-size:18px;line-height:1}
+
+.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:54px}
+@media(max-width:860px){.feat-grid{grid-template-columns:1fr}}
+.feat{border:1px solid var(--line);border-radius:var(--r);padding:28px;background:var(--panel);transition:border-color .25s,transform .25s}
+.feat:hover{border-color:var(--gold);transform:translateY(-3px)}
+.feat .fi{font-size:20px;width:44px;height:44px;border:1px solid var(--line);border-radius:50%;display:grid;place-items:center;color:var(--gold)}
+.feat h4{font-family:var(--fd);font-weight:400;font-size:18.5px;margin-top:18px}
+.feat p{color:var(--mut);font-size:13.5px;line-height:1.6;margin-top:8px}
+
+.quote-band{padding:100px 0;text-align:center;border-top:1px solid var(--line-soft)}
+.quote-band blockquote{font-family:var(--fd);font-weight:300;font-style:italic;font-size:clamp(24px,3vw,34px);line-height:1.35;max-width:760px;margin:0 auto;color:var(--bone)}
+.quote-band blockquote em{color:var(--gold-soft)}
+.quote-band .attr{margin-top:26px;font-family:var(--fm);font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}
+
+.stats-band{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft)}
+@media(max-width:860px){.stats-band{grid-template-columns:repeat(2,1fr)}}
+.stat-cell{padding:44px 30px;border-left:1px solid var(--line-soft);text-align:center}
+.stat-cell:first-child{border-left:none}
+.stat-cell .v{font-family:var(--fd);font-weight:300;font-size:42px;color:var(--gold-soft)}
+.stat-cell .l{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-top:6px}
+
+.final-cta{padding:120px 0;text-align:center}
+.final-cta h2{font-family:var(--fd);font-weight:300;font-size:clamp(34px,4.4vw,56px);letter-spacing:-.01em;line-height:1.06}
+.final-cta h2 em{font-style:italic;color:var(--gold-soft)}
+.final-cta p{margin-top:18px;color:var(--mut)}
+
+.reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s ease}
+.reveal.in{opacity:1;transform:none}
+
+/* ============================================================
+   APP
+============================================================ */
+.banner{padding:38px 0 30px;border-bottom:1px solid var(--line-soft)}
+.banner-inner{max-width:1240px;margin:0 auto;padding:0 28px;display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.banner h1{font-family:var(--fd);font-weight:300;font-size:34px;line-height:1.12}
+.banner h1 em{font-style:italic;color:var(--gold-soft)}
+.banner .sub{margin-top:8px;color:var(--mut);font-size:14.5px;max-width:580px}
+.banner .who{text-align:right}
+.banner .who .nm{font-weight:700;font-size:15px}
+.banner .who .rl{font-family:var(--fm);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-top:2px}
+
+.wrap{max-width:1240px;margin:0 auto;padding:32px 28px 90px}
+.grid{display:grid;gap:24px}
+.grid.two{grid-template-columns:1.55fr 1fr}
+@media(max-width:940px){.grid.two{grid-template-columns:1fr}}
+.section-label{font-family:var(--fm);font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);display:flex;align-items:center;gap:12px;margin:36px 0 14px}
+.section-label::after{content:"";flex:1;height:1px;background:var(--line-soft)}
+.section-label:first-child{margin-top:0}
+.section-label .cta{margin-left:auto}
+.section-label button{font-family:var(--fb);font-size:11px;font-weight:700;color:var(--gold-soft);letter-spacing:.04em;text-transform:none}
+.section-label button:hover{color:var(--gold)}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;box-shadow:0 1px 2px rgba(27,24,16,.04),0 10px 28px rgba(27,24,16,.05)}
+.card-pad{padding:20px 22px}
+
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;padding:3px 11px;border-radius:999px}
+.pill.ok{background:var(--ok-bg);color:var(--ok)}
+.pill.warn{background:var(--warn-bg);color:var(--warn)}
+.pill.due{background:var(--due-bg);color:var(--due)}
+.pill.neutral{background:var(--panel-2);color:var(--mut)}
+.pill.gold{background:var(--gold-dim);color:var(--gold-soft)}
+.pill .d{width:6px;height:6px;border-radius:50%;background:currentColor}
+
+.prop{display:flex;gap:18px;align-items:center;padding:18px 22px;border-bottom:1px solid var(--line-soft)}
+.prop:last-child{border-bottom:none}
+.prop .addr{font-weight:600;font-size:15px}
+.prop .ten{font-size:13px;color:var(--mut);margin-top:2px}
+.prop-tags{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.prop-info{flex:1;min-width:0}
+.ring{position:relative;width:60px;height:60px;flex-shrink:0}
+.ring svg{transform:rotate(-90deg)}
+.ring .rv{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--fm);font-size:13px}
+
+.tbl{width:100%;border-collapse:collapse;font-size:13.5px}
+.tbl th{font-family:var(--fm);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);text-align:left;padding:13px 22px;border-bottom:1px solid var(--line-soft);font-weight:500}
+.tbl td{padding:13px 22px;border-bottom:1px solid var(--line-soft);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl .mono{font-family:var(--fm);font-size:11.5px;color:var(--dim)}
+.tbl .amt{font-family:var(--fm);font-size:13px}
+
+.issue{padding:17px 22px;border-bottom:1px solid var(--line-soft)}
+.issue:last-child{border-bottom:none}
+.issue-top{display:flex;gap:13px;align-items:flex-start}
+.issue-icon{width:38px;height:38px;border-radius:var(--rs);background:var(--panel-2);border:1px solid var(--line);color:var(--gold);display:grid;place-items:center;font-size:16px;flex-shrink:0}
+.issue-body{flex:1;min-width:0}
+.issue-body .it{font-weight:600;font-size:14.5px}
+.issue-body .im{font-size:12.5px;color:var(--mut);margin-top:1px}
+.issue-actions{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.quotebox{margin-top:4px;background:var(--gold-dim);border:1px dashed var(--gold);border-radius:var(--rs);padding:10px 14px;font-size:13px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.quotebox strong{font-family:var(--fm);color:var(--gold-soft)}
+.photo-thumbs{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.photo-thumbs img{width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+
+.steps{display:flex;margin-top:14px}
+.step{flex:1;text-align:center;position:relative}
+.step .sd{width:11px;height:11px;border-radius:50%;background:var(--line);margin:0 auto;position:relative;z-index:2;border:2px solid var(--line);transition:all .3s}
+.step.done .sd{background:var(--gold);border-color:var(--gold)}
+.step.now .sd{background:var(--bg);border-color:var(--gold);box-shadow:0 0 0 4px var(--gold-dim)}
+.step .sl{font-size:10px;font-weight:600;color:var(--dim);margin-top:6px}
+.step.done .sl,.step.now .sl{color:var(--bone)}
+.step::before{content:"";position:absolute;top:5px;left:-50%;width:100%;height:1.5px;background:var(--line);z-index:1}
+.step:first-child::before{display:none}
+.step.done::before{background:var(--gold)}
+
+.field{margin-bottom:14px}
+.field label{display:block;font-family:var(--fm);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:7px}
+.field input,.field textarea,.field select{width:100%;padding:10px 14px;border:1px solid var(--line);border-radius:var(--rs);background:var(--panel-2);color:var(--bone);transition:border .15s}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--gold);outline:none}
+.field input::placeholder,.field textarea::placeholder{color:var(--dim)}
+.field textarea{resize:vertical;min-height:78px}
+.field .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.seg{display:flex;gap:8px}
+.seg button{flex:1;padding:9px 6px;border:1px solid var(--line);border-radius:var(--rs);font-weight:600;font-size:12.5px;color:var(--mut);background:var(--panel-2);transition:all .15s}
+.seg button.sel{border-color:var(--gold);background:var(--gold-dim);color:var(--gold-soft)}
+.attach-chip{display:inline-flex;align-items:center;gap:8px;font-family:var(--fm);font-size:11px;color:var(--gold-soft);background:var(--gold-dim);border-radius:999px;padding:4px 12px;margin-left:8px}
+
+.docrow{display:flex;align-items:center;gap:14px;padding:15px 22px;border-bottom:1px solid var(--line-soft)}
+.docrow:last-child{border-bottom:none}
+.doc-ic{width:36px;height:44px;border-radius:4px;background:var(--panel-2);border:1px solid var(--line);flex-shrink:0;display:grid;place-items:center;font-family:var(--fm);font-size:8px;color:var(--dim);letter-spacing:.08em}
+.docrow .dn{font-weight:600;font-size:14px}
+.docrow .dm{font-size:12px;color:var(--mut)}
+.docrow .flex1{flex:1;min-width:0}
+
+.job{padding:18px 22px;border-bottom:1px solid var(--line-soft)}
+.job:last-child{border-bottom:none}
+.job .jt{font-weight:600;font-size:15px;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.job .jm{font-size:12.5px;color:var(--mut);margin-top:3px}
+.job .jd{font-size:13.5px;margin-top:8px;color:var(--bone)}
+
+.tradeprof{--panel:#16171A;--panel-2:#1D1E22;--line:#2B2C32;--line-soft:#222328;--bone:#ECE7DC;--mut:#9A968B;--dim:#75716A;--gold:#C8AE7B;--gold-soft:#E2D0A4;--gold-dim:rgba(200,174,123,.16);
+  background:linear-gradient(160deg,var(--panel),var(--panel-2));border:1px solid var(--line);border-radius:var(--r);padding:26px;color:var(--bone);position:relative;overflow:hidden}
+.tradeprof .btn.gold{background:var(--gold);color:#141005}
+.tradeprof .btn.gold:hover{background:var(--gold-soft)}
+.tradeprof::after{content:"";position:absolute;top:-50px;right:-50px;width:180px;height:180px;border-radius:50%;border:1px solid var(--gold-dim)}
+.tradeprof .tn{font-family:var(--fd);font-size:22px;font-weight:400}
+.tradeprof .tt{font-size:13px;color:var(--mut);margin-top:3px}
+.tradeprof .stars{color:var(--gold);font-size:14px;letter-spacing:2px;margin-top:12px}
+.tradeprof .stat-row{display:flex;gap:30px;margin-top:18px}
+.tradeprof .st .v{font-family:var(--fd);font-size:26px;font-weight:300;color:var(--gold-soft)}
+.tradeprof .st .l{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-top:2px}
+
+/* rent */
+.rent-hero{display:flex;align-items:flex-end;justify-content:space-between;padding:20px 22px;border-bottom:1px solid var(--line-soft);gap:14px;flex-wrap:wrap}
+.rent-hero .rv{font-family:var(--fd);font-weight:300;font-size:34px;color:var(--gold-soft)}
+.rent-hero .rl{font-family:var(--fm);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-top:2px}
+.sixmo{display:flex;gap:4px;align-items:flex-end;height:26px}
+.sixmo span{width:7px;border-radius:2px;background:var(--ok);opacity:.85}
+.sixmo span.miss{background:var(--due)}
+.sixmo span.pend{background:var(--line)}
+
+/* messages */
+.chat{display:flex;flex-direction:column;height:380px}
+.chat-tabs{display:flex;border-bottom:1px solid var(--line-soft)}
+.chat-tabs button{flex:1;padding:12px;font-size:12.5px;font-weight:600;color:var(--mut);border-bottom:2px solid transparent;transition:all .15s}
+.chat-tabs button.on{color:var(--gold-soft);border-bottom-color:var(--gold)}
+.chat-scroll{flex:1;overflow-y:auto;padding:18px 18px 8px;display:flex;flex-direction:column;gap:10px}
+.bubble{max-width:78%;padding:10px 14px;border-radius:14px;font-size:13.5px;line-height:1.5}
+.bubble .bt{font-family:var(--fm);font-size:9.5px;color:var(--dim);margin-top:4px;letter-spacing:.06em}
+.bubble.them{align-self:flex-start;background:var(--panel-2);border:1px solid var(--line);border-bottom-left-radius:4px}
+.bubble.me{align-self:flex-end;background:var(--gold-dim);border:1px solid rgba(200,174,123,.3);border-bottom-right-radius:4px}
+.bubble.me .bt{text-align:right}
+.bubble .bwho{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:3px}
+.chat-input{display:flex;gap:10px;padding:14px;border-top:1px solid var(--line-soft)}
+.chat-input input{flex:1;padding:10px 16px;border:1px solid var(--line);border-radius:999px;background:var(--panel-2);color:var(--bone)}
+.chat-input input:focus{border-color:var(--gold);outline:none}
+
+/* property detail */
+.backlink{font-size:13px;font-weight:600;color:var(--mut);display:inline-flex;align-items:center;gap:8px;margin-bottom:18px}
+.backlink:hover{color:var(--gold-soft)}
+.ptabs{display:flex;gap:4px;border-bottom:1px solid var(--line-soft);margin:18px 0 22px;flex-wrap:wrap}
+.ptabs button{padding:10px 16px;font-size:13px;font-weight:600;color:var(--mut);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s}
+.ptabs button.on{color:var(--gold-soft);border-bottom-color:var(--gold)}
+.factor{display:flex;justify-content:space-between;gap:14px;padding:10px 0;border-bottom:1px solid var(--line-soft);font-size:13.5px}
+.factor:last-child{border-bottom:none}
+.factor .fp{font-family:var(--fm);font-size:12.5px;color:var(--due);flex-shrink:0}
+.factor .fp.plus{color:var(--ok)}
+.kv{display:flex;justify-content:space-between;gap:16px;padding:11px 0;border-bottom:1px solid var(--line-soft);font-size:13.5px}
+.kv:last-child{border-bottom:none}
+.kv .k{color:var(--mut)}
+.kv .v{font-weight:600;text-align:right}
+.kv .v.mono{font-family:var(--fm);font-weight:400;font-size:12px;color:var(--dim)}
+
+/* modal & toast */
+.overlay{position:fixed;inset:0;background:rgba(27,24,16,.42);backdrop-filter:blur(4px);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
+.overlay.open{display:flex}
+.modal{background:var(--bg);border:1px solid var(--line);border-radius:18px;max-width:530px;width:100%;max-height:88vh;overflow:auto;box-shadow:0 30px 90px rgba(27,24,16,.3);animation:pop .22s ease}
+@keyframes pop{from{transform:translateY(14px) scale(.98);opacity:0}to{transform:none;opacity:1}}
+.modal-head{padding:24px 28px 0}
+.modal-head h3{font-family:var(--fd);font-size:22px;font-weight:400}
+.modal-head p{font-size:13.5px;color:var(--mut);margin-top:5px}
+.modal-body{padding:18px 28px 28px}
+.modal-foot{display:flex;gap:10px;justify-content:flex-end;margin-top:4px}
+.docpaper{background:var(--bg);border:1px solid var(--line);border-radius:var(--rs);padding:22px;font-size:13px;line-height:1.7;margin-bottom:16px}
+.docpaper h4{font-family:var(--fd);font-weight:400;font-size:16px;margin-bottom:8px}
+.docpaper .clause{color:var(--mut)}
+.signline{border-bottom:1px solid var(--gold);margin-top:18px;padding-bottom:4px;font-family:var(--fd);font-style:italic;font-size:20px;min-height:30px;color:var(--gold-soft)}
+.signlabel{font-family:var(--fm);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-top:4px}
+.auditblock{margin-top:18px;border-top:1px dashed var(--line);padding-top:14px}
+.auditblock .ah{font-family:var(--fm);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin-bottom:8px}
+.auditblock .ar{display:flex;gap:12px;font-family:var(--fm);font-size:10.5px;color:var(--mut);padding:3px 0;flex-wrap:wrap}
+.auditblock .ar .ak{color:var(--dim);width:108px;flex-shrink:0;letter-spacing:.06em}
+.auditblock .ar .av{word-break:break-all;flex:1;min-width:0}
+.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(90px);background:#17171A;color:#F4F1E8;padding:13px 24px;border-radius:999px;font-size:13.5px;font-weight:600;z-index:200;transition:transform .32s cubic-bezier(.2,.9,.3,1.2);display:flex;align-items:center;gap:10px;max-width:92vw;box-shadow:0 14px 40px rgba(27,24,16,.35)}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast .td{width:8px;height:8px;border-radius:50%;background:#C8AE7B;flex-shrink:0}
+
+.empty{padding:32px 22px;text-align:center;color:var(--dim);font-size:13.5px}
+.empty .ei{font-size:24px;margin-bottom:6px;opacity:.6}
+.view{display:none;animation:fade .25s ease}
+.view.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+footer.app-foot{border-top:1px solid var(--line-soft);padding:28px;text-align:center;font-size:12px;color:var(--dim)}
+footer.app-foot .fb{font-family:var(--fd);color:var(--bone)}
+footer.app-foot button,footer.app-foot a{color:var(--dim);text-decoration:underline;font-size:12px}
+footer.app-foot button:hover,footer.app-foot a:hover{color:var(--mut)}
+@media(max-width:640px){
+  .topbar-inner{padding:0 16px;gap:10px}
+  .nav-links{gap:14px}
+  .nav-links .hide-m{display:none}
+  .role-switch button{padding:7px 11px;font-size:12px}
+  .banner h1{font-size:26px}
+  .banner .who{display:none}
+  .wrap{padding:24px 16px 60px}
+  .exit-demo{display:none}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a href="#" onclick="goLanding();return false" style="text-decoration:none"><div class="brand"><span class="mark"></span>Slate</div></a>
+    <nav class="nav-links" id="land-nav">
+      <a href="#roles" class="hide-m">Who it's for</a>
+      <a href="#features" class="hide-m">What it does</a>
+      <button class="btn gold sm" onclick="enterApp()">Open Slate</button>
+    </nav>
+    <nav class="role-switch" id="app-nav" style="display:none" aria-label="Switch role">
+      <button id="rb-landlord" class="active" onclick="setRole('landlord')">Landlord<span class="pip" id="pip-landlord"></span></button>
+      <button id="rb-tenant" onclick="setRole('tenant')">Tenant<span class="pip" id="pip-tenant"></span></button>
+      <button id="rb-trade" onclick="setRole('trade')">Trade<span class="pip" id="pip-trade"></span></button>
+    </nav>
+    <button class="bell" id="bell" style="display:none" onclick="toggleNotifs()" aria-label="Notifications">🔔<span class="bn" id="bell-n"></span></button>
+    <button class="exit-demo" id="exit-demo" style="display:none" onclick="goLanding()">← Back to site</button>
+  </div>
+</header>
+
+<div class="notif-panel" id="notif-panel">
+  <div class="nh">Notifications</div>
+  <div id="notif-list"></div>
+</div>
+
+<!-- ============ LANDING ============ -->
+<div class="view active" id="view-landing">
+  <section class="land-section hero">
+    <div>
+      <div class="eyebrow">For landlords · tenants · trades</div>
+      <h1>The record every home <em>deserves.</em></h1>
+      <p class="lede">Slate puts a tenancy's entire life — signatures, certificates, repairs, rent and conversations — on one shared, time-stamped record that every party can see and none can quietly rewrite.</p>
+      <div class="ctas">
+        <button class="btn gold" onclick="enterApp()">Open Slate</button>
+        <a href="#roles" class="btn line" style="text-decoration:none">See how it works</a>
+      </div>
+      <div class="trustline">NO ACCOUNT NEEDED · FULLY INTERACTIVE · WORKS OFFLINE</div>
+    </div>
+    <div class="hero-card">
+      <div class="hc-title">The property ledger</div>
+      <div class="ledger">
+        <div class="ledger-item"><div class="lt">TODAY · 14:02</div><div class="lx"><strong>Rent received</strong> — £725, on time, month 23 of 23</div><div class="lwho">Tenant</div></div>
+        <div class="ledger-item"><div class="lt">09 JUN · 09:41</div><div class="lx"><strong>Tenancy variation</strong> signed by both parties</div><div class="lwho">Landlord + Tenant</div></div>
+        <div class="ledger-item"><div class="lt">02 JUN · 16:15</div><div class="lx">Repair closed: <strong>extractor fan</strong> — invoice filed</div><div class="lwho">Trade</div></div>
+        <div class="ledger-item muted"><div class="lt">14 MAY · 11:30</div><div class="lx"><strong>Gas Safety CP12</strong> renewed — valid to 2027</div><div class="lwho">Trade</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="land-section land-block" id="roles">
+    <div class="land-head reveal">
+      <div class="eyebrow">Three sides, one record</div>
+      <h2>Renting runs on trust. Slate runs on <em>proof.</em></h2>
+      <p>Disputes happen because each side keeps its own version of events — a drawer of paper, a phone full of texts, a memory of who said what. Slate replaces all three with a single record that belongs to the property itself.</p>
+    </div>
+    <div class="roles-grid reveal">
+      <div class="role-cell">
+        <div class="rc-no">I — LANDLORDS</div>
+        <h3>Compliance without the spreadsheet</h3>
+        <p>Every certificate, signature and repair across the portfolio, with the deadlines watched for you.</p>
+        <ul>
+          <li>Traffic-light compliance per property</li>
+          <li>Expiry reminders before the law minds</li>
+          <li>Rent tracking and arrears at a glance</li>
+          <li>Dispatch repairs to vetted local trades</li>
+        </ul>
+      </div>
+      <div class="role-cell">
+        <div class="rc-no">II — TENANTS</div>
+        <h3>Your home, in your hands</h3>
+        <p>Your agreement, your certificates, your repairs and your payment history — rights made visible.</p>
+        <ul>
+          <li>Report repairs with photos in a minute</li>
+          <li>Watch the fix progress, step by step</li>
+          <li>Sign documents from your phone</li>
+          <li>A perfect rent record you can take with you</li>
+        </ul>
+      </div>
+      <div class="role-cell">
+        <div class="rc-no">III — TRADES</div>
+        <h3>Work finds you</h3>
+        <p>Approved jobs in your trade and travel area, from verified landlords, with no lead fees.</p>
+        <ul>
+          <li>Notified the moment work is approved</li>
+          <li>Quote in-app, get booked in-app</li>
+          <li>Invoices and certificates filed for you</li>
+          <li>A public profile built on real jobs</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="land-section land-block" id="features">
+    <div class="land-head reveal">
+      <div class="eyebrow">What it does</div>
+      <h2>Everything a tenancy needs. <em>Nothing it doesn't.</em></h2>
+    </div>
+    <div class="feat-grid reveal">
+      <div class="feat"><div class="fi">✍︎</div><h4>Signing</h4><p>Agreements, variations and inventories signed by every party, with a tamper-evident audit trail of who signed what, and when.</p></div>
+      <div class="feat"><div class="fi">✓</div><h4>Certificates</h4><p>Gas safety, EICR, EPC and licensing in one vault — with reminders that arrive before deadlines do.</p></div>
+      <div class="feat"><div class="fi">🛠</div><h4>Repairs</h4><p>Reported by the tenant, approved by the landlord, quoted and completed by a local trade — one thread, no chasing.</p></div>
+      <div class="feat"><div class="fi">£</div><h4>Rent</h4><p>Every payment logged against the property. Landlords see arrears instantly; tenants build a portable payment record.</p></div>
+      <div class="feat"><div class="fi">💬</div><h4>Messages</h4><p>Conversations between landlord, tenant and trade live next to the work they're about — not lost in a text thread.</p></div>
+      <div class="feat"><div class="fi">∞</div><h4>The ledger</h4><p>The signature of Slate: a permanent, shared timeline of everything above. When there's a dispute, there's a record.</p></div>
+    </div>
+  </section>
+
+  <section class="quote-band reveal">
+    <blockquote>"I reported that damp in March." — Until now, sentences like this started arguments. On Slate, they <em>end</em> them.</blockquote>
+    <div class="attr">The case for a shared record</div>
+  </section>
+
+  <div class="stats-band reveal">
+    <div class="stat-cell"><div class="v">4.6m</div><div class="l">Rented homes in the UK*</div></div>
+    <div class="stat-cell"><div class="v">£1.2bn</div><div class="l">Deposits disputed yearly*</div></div>
+    <div class="stat-cell"><div class="v">9 days</div><div class="l">Avg repair, chased by text*</div></div>
+    <div class="stat-cell"><div class="v">1</div><div class="l">Record on Slate</div></div>
+  </div>
+
+  <section class="land-section final-cta reveal">
+    <h2>Step inside. <em>Be all three.</em></h2>
+    <p>Slate lets you work as landlord, tenant and trade — and watch one repair travel between them.</p>
+    <div style="margin-top:32px"><button class="btn gold" onclick="enterApp()">Open Slate</button></div>
+    <p style="margin-top:60px;font-family:var(--fm);font-size:10.5px;color:var(--dim);letter-spacing:.06em">SLATE · STANDALONE EDITION · DEMO DATA ONLY · *FIGURES ILLUSTRATIVE</p>
+  </section>
+</div>
+
+<!-- ============ APP BANNER ============ -->
+<div class="banner view" id="app-banner">
+  <div class="banner-inner">
+    <div>
+      <h1 id="banner-h1"></h1>
+      <p class="sub" id="banner-sub"></p>
+    </div>
+    <div class="who"><div class="nm" id="who-nm"></div><div class="rl" id="who-rl"></div></div>
+  </div>
+</div>
+
+<!-- ============ LANDLORD ============ -->
+<main class="wrap view" id="view-landlord">
+  <div class="grid two">
+    <div>
+      <div class="section-label">Portfolio <span class="cta"><button onclick="openAddProp()">+ Add a property</button></span></div>
+      <div class="card" id="portfolio"></div>
+
+      <div class="section-label" id="rent-month-label">Rent</div>
+      <div class="card">
+        <div class="rent-hero">
+          <div><div class="rv" id="rent-total"></div><div class="rl" id="rent-due-label"></div></div>
+          <div style="text-align:right" id="rent-flag"></div>
+        </div>
+        <table class="tbl" id="rent-tbl"></table>
+      </div>
+
+      <div class="section-label">Issues &amp; repairs</div>
+      <div class="card" id="ll-issues"></div>
+
+      <div class="section-label">Documents <span class="cta"><button onclick="openSendDoc()">+ Send for signature</button></span></div>
+      <div class="card" id="ll-docs"></div>
+    </div>
+    <div>
+      <div class="section-label">Messages</div>
+      <div class="card chat">
+        <div class="chat-tabs">
+          <button class="on" id="tab-lt" onclick="llThread('tenant')">Callum — tenant</button>
+          <button id="tab-ltr" onclick="llThread('trade')">Gordon — trade</button>
+        </div>
+        <div class="chat-scroll" id="ll-chat"></div>
+        <div class="chat-input">
+          <input id="ll-msg" placeholder="Write a message…" onkeydown="if(event.key==='Enter')llSend()">
+          <button class="btn gold sm" onclick="llSend()">Send</button>
+        </div>
+      </div>
+
+      <div class="section-label">Certificates <span class="cta"><button onclick="openCertModal()">+ Upload a certificate</button></span></div>
+      <div class="card"><table class="tbl" id="cert-tbl"></table></div>
+
+      <div class="section-label">Ledger — 12 Rosemount Place</div>
+      <div class="card card-pad"><div class="ledger" id="ledger"></div></div>
+    </div>
+  </div>
+</main>
+
+<!-- ============ PROPERTY DETAIL ============ -->
+<main class="wrap view" id="view-prop">
+  <button class="backlink" onclick="closeProp()">← Back to portfolio</button>
+  <div id="prop-head"></div>
+  <div class="ptabs" id="prop-tabs"></div>
+  <div id="prop-body"></div>
+</main>
+
+<!-- ============ TENANT ============ -->
+<main class="wrap view" id="view-tenant">
+  <div class="grid two">
+    <div>
+      <div class="section-label">Your rent</div>
+      <div class="card">
+        <div class="rent-hero">
+          <div><div class="rv">£725</div><div class="rl">Next payment · due 1 Jul 2026</div></div>
+          <div style="text-align:right">
+            <div class="sixmo" title="Last 6 months"><span style="height:100%"></span><span style="height:100%"></span><span style="height:100%"></span><span style="height:100%"></span><span style="height:100%"></span><span style="height:100%"></span></div>
+            <div style="font-family:var(--fm);font-size:10px;color:var(--ok);margin-top:6px;letter-spacing:.1em">23 OF 23 ON TIME</div>
+          </div>
+        </div>
+        <table class="tbl" id="tn-rent"></table>
+        <div style="padding:14px 22px;border-top:1px solid var(--line-soft);display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn line sm" onclick="exportRentRecord()">Export my rent record</button>
+          <button class="btn line sm" onclick="toast('Standing order: Slate Client a/c · sort 80-22-60 · ref SL-ROSE-12')">Payment details</button>
+        </div>
+      </div>
+
+      <div class="section-label">Your repairs</div>
+      <div class="card" id="tn-issues"></div>
+
+      <div class="section-label">Documents for you</div>
+      <div class="card" id="tn-docs"></div>
+
+      <div class="section-label">Your tenancy</div>
+      <div class="card card-pad" id="tn-tenancy"></div>
+    </div>
+    <div>
+      <div class="section-label">Messages — Moira, your landlord</div>
+      <div class="card chat">
+        <div class="chat-scroll" id="tn-chat"></div>
+        <div class="chat-input">
+          <input id="tn-msg" placeholder="Message Moira…" onkeydown="if(event.key==='Enter')tnSend()">
+          <button class="btn gold sm" onclick="tnSend()">Send</button>
+        </div>
+      </div>
+
+      <div class="section-label">Report an issue</div>
+      <div class="card card-pad">
+        <div class="field"><label for="iss-title">What's the problem?</label><input id="iss-title" placeholder="e.g. Boiler not heating water"></div>
+        <div class="field"><label for="iss-desc">Tell us a bit more</label><textarea id="iss-desc" placeholder="When did it start? Which room?"></textarea></div>
+        <div class="field"><label>How urgent?</label>
+          <div class="seg" id="iss-seg">
+            <button onclick="pickUrg(this,'Routine')">Routine</button>
+            <button class="sel" onclick="pickUrg(this,'Soon')">Soon</button>
+            <button onclick="pickUrg(this,'Urgent')">Urgent</button>
+          </div>
+        </div>
+        <div class="field"><label>Photo (optional)</label>
+          <button class="btn line sm" onclick="document.getElementById('iss-photo').click()">📎 Attach a photo</button><span id="iss-photo-chip"></span>
+          <input type="file" id="iss-photo" accept="image/*" style="display:none" onchange="attachIssuePhoto(this)">
+        </div>
+        <button class="btn gold" style="width:100%;justify-content:center" onclick="reportIssue()">Send to your landlord</button>
+        <p style="font-size:11.5px;color:var(--dim);margin-top:10px;text-align:center">Moira is notified instantly. Everything is added to your home's record.</p>
+      </div>
+
+      <div class="section-label">Your certificates</div>
+      <div class="card" id="tn-certs"></div>
+    </div>
+  </div>
+</main>
+
+<!-- ============ TRADE ============ -->
+<main class="wrap view" id="view-trade">
+  <div class="grid two">
+    <div>
+      <div class="section-label" id="tr-jobs-label">Jobs near you</div>
+      <div class="card" id="tr-jobs"></div>
+
+      <div class="section-label">Booked in</div>
+      <div class="card" id="tr-booked"></div>
+
+      <div class="section-label">Messages — Moira Fraser, landlord</div>
+      <div class="card chat" style="height:330px" id="tr-chat-card">
+        <div class="chat-scroll" id="tr-chat"></div>
+        <div class="chat-input">
+          <input id="tr-msg" placeholder="Message the landlord…" onkeydown="if(event.key==='Enter')trSend()">
+          <button class="btn gold sm" onclick="trSend()">Send</button>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="section-label">Your profile</div>
+      <div class="tradeprof" id="tr-prof"></div>
+
+      <div class="section-label">Recent reviews</div>
+      <div class="card card-pad" id="tr-reviews" style="display:flex;flex-direction:column;gap:16px"></div>
+    </div>
+  </div>
+</main>
+
+<footer class="app-foot view" id="app-foot">
+  <span class="fb">Slate</span> — standalone edition · demo data, saved on this device only
+  <span style="margin:0 6px">·</span><button onclick="openLegal('privacy')">Privacy</button>
+  <span style="margin:0 6px">·</span><button onclick="openLegal('terms')">Terms</button>
+  <span style="margin:0 6px">·</span><button onclick="resetDemo()">Reset demo data</button>
+</footer>
+
+<!-- Sign modal -->
+<div class="overlay" id="sign-overlay" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Sign document</h3>
+      <p>Review the summary, then sign by typing your full legal name.</p>
+    </div>
+    <div class="modal-body">
+      <div class="docpaper">
+        <h4 id="sign-doc-name"></h4>
+        <p class="clause" id="sign-doc-clause"></p>
+        <div class="signline" id="sign-preview">&nbsp;</div>
+        <div class="signlabel">Signature of tenant</div>
+        <div class="signline" style="font-style:italic" id="sign-ll-name"></div>
+        <div class="signlabel" id="sign-ll-label"></div>
+      </div>
+      <div class="field"><label for="sign-name">Type your full name to sign</label><input id="sign-name" placeholder="Callum Stewart" oninput="document.getElementById('sign-preview').textContent=this.value||' '"></div>
+      <div class="modal-foot">
+        <button class="btn line" onclick="closeModal('sign-overlay')">Cancel</button>
+        <button class="btn gold" onclick="confirmSign()">Sign document</button>
+      </div>
+      <p style="font-size:11px;color:var(--dim);margin-top:12px">Your typed name, the time, your account email and a fingerprint of this exact document version are recorded with the signature. Documents are signed and recorded on Slate.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Signed copy / signing record modal -->
+<div class="overlay" id="copy-overlay" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="copy-name"></h3>
+      <p id="copy-kind"></p>
+    </div>
+    <div class="modal-body">
+      <div class="docpaper" id="copy-paper"></div>
+      <div class="modal-foot"><button class="btn line" onclick="closeModal('copy-overlay')">Close</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- Quote modal (trade) -->
+<div class="overlay" id="quote-overlay" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Send a quote</h3>
+      <p id="quote-job"></p>
+    </div>
+    <div class="modal-body">
+      <div class="field"><label for="q-amt">Your price (£)</label><input id="q-amt" type="number" min="1" value="95"></div>
+      <div class="field"><label for="q-date">Proposed day</label><input id="q-date" value="Tue 17 Jun"></div>
+      <div class="field"><label>Time window</label>
+        <div class="seg" id="q-seg">
+          <button class="sel" onclick="pickSeg(this,'q-seg')">9–11am</button>
+          <button onclick="pickSeg(this,'q-seg')">1–3pm</button>
+          <button onclick="pickSeg(this,'q-seg')">4–6pm</button>
+        </div>
+      </div>
+      <div class="field"><label for="q-note">Note (optional)</label><input id="q-note" placeholder="e.g. Will bring parts for common models"></div>
+      <div class="modal-foot">
+        <button class="btn line" onclick="closeModal('quote-overlay')">Cancel</button>
+        <button class="btn gold" onclick="confirmQuote()">Send quote</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Complete job modal (trade) -->
+<div class="overlay" id="complete-overlay" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Complete job &amp; file invoice</h3>
+      <p id="complete-job"></p>
+    </div>
+    <div class="modal-body">
+      <div class="field"><label for="c-amt">Invoice amount (£)</label><input id="c-amt" type="number" min="1"></div>
+      <div class="field"><label>Photo of completed work (optional)</label>
+        <button class="btn line sm" onclick="document.getElementById('c-photo').click()">📎 Attach a photo</button><span id="c-photo-chip"></span>
+        <input type="file" id="c-photo" accept="image/*" style="display:none" onchange="attachCompletePhoto(this)">
+      </div>
+      <div class="field"><label for="c-note">Work note for the record</label><textarea id="c-note" placeholder="What was done"></textarea></div>
+      <div class="modal-foot">
+        <button class="btn line" onclick="closeModal('complete-overlay')">Cancel</button>
+        <button class="btn gold" onclick="confirmComplete()">File invoice &amp; close job</button>
+      </div>
+      <p style="font-size:11px;color:var(--dim);margin-top:12px">The invoice and photos are filed against the property record. The landlord and tenant are notified.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Review modal (landlord) -->
+<div class="overlay" id="review-overlay" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Rate this job</h3>
+      <p id="review-job"></p>
+    </div>
+    <div class="modal-body">
+      <div class="field"><label>Rating</label>
+        <div class="seg" id="r-seg">
+          <button onclick="pickSeg(this,'r-seg')">★★</button>
+          <button onclick="pickSeg(this,'r-seg')">★★★</button>
+          <button onclick="pickSeg(this,'r-seg')">★★★★</button>
+          <button class="sel" onclick="pickSeg(this,'r-seg')">★★★★★</button>
+        </div>
+      </div>
+      <div class="field"><label for="r-text">A few words</label><textarea id="r-text" placeholder="How was the work?"></textarea></div>
+      <div class="modal-foot">
+        <button class="btn line" onclick="closeModal('review-overlay')">Cancel</button>
+        <button class="btn gold" onclick="confirmReview()">Post review</button>
+      </div>
+      <p style="font-size:11px;color:var(--dim);margin-top:12px">Reviews on Slate come only from completed jobs — no fake reviews possible.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Upload certificate modal (landlord) -->
+<div class="overlay" id="cert-overlay" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Upload a certificate</h3>
+      <p>Filed in the property's vault. Compliance updates straight away.</p>
+    </div>
+    <div class="modal-body">
+      <div class="field"><label for="ct-prop">Property</label><select id="ct-prop"></select></div>
+      <div class="field"><label for="ct-type">Certificate</label>
+        <select id="ct-type">
+          <option>Gas Safety (CP12)</option>
+          <option>EICR</option>
+          <option>EPC</option>
+          <option>Smoke &amp; heat alarms (interlinked)</option>
+          <option>Legionella risk assessment</option>
+        </select>
+      </div>
+      <div class="field"><label for="ct-exp">Valid until</label><input id="ct-exp" type="date"></div>
+      <div class="field"><label>File</label>
+        <button class="btn line sm" onclick="document.getElementById('ct-file').click()">📎 Attach the certificate</button><span id="ct-file-chip"></span>
+        <input type="file" id="ct-file" style="display:none" onchange="document.getElementById('ct-file-chip').innerHTML='<span class=attach-chip>'+esc(this.files[0]?this.files[0].name:'')+'</span>'">
+      </div>
+      <div class="modal-foot">
+        <button class="btn line" onclick="closeModal('cert-overlay')">Cancel</button>
+        <button class="btn gold" onclick="confirmCert()">File certificate</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Send doc for signature modal (landlord) -->
+<div class="overlay" id="senddoc-overlay" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Send a document for signature</h3>
+      <p>You sign as you send. The tenant is asked to sign on their device.</p>
+    </div>
+    <div class="modal-body">
+      <div class="field"><label for="sd-prop">Property</label><select id="sd-prop"></select></div>
+      <div class="field"><label for="sd-kind">Document kind</label>
+        <select id="sd-kind">
+          <option>Tenancy variation</option>
+          <option>Inventory &amp; schedule of condition</option>
+          <option>Rent increase notice (statutory)</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="field"><label for="sd-title">Title</label><input id="sd-title" placeholder="e.g. Tenancy variation — pet addendum"></div>
+      <div class="field"><label for="sd-clause">Summary of terms</label><textarea id="sd-clause" placeholder="Plain-English summary of what is being agreed"></textarea></div>
+      <div class="field"><label for="sd-sign">Type your full name to sign as landlord</label><input id="sd-sign" placeholder="Moira Fraser"></div>
+      <div class="modal-foot">
+        <button class="btn line" onclick="closeModal('senddoc-overlay')">Cancel</button>
+        <button class="btn gold" onclick="confirmSendDoc()">Sign &amp; send to tenant</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add property modal (landlord) -->
+<div class="overlay" id="addprop-overlay" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Add a property</h3>
+      <p>Certificates can be uploaded once it's created — compliance starts tracking immediately.</p>
+    </div>
+    <div class="modal-body">
+      <div class="field"><label for="ap-addr">Address</label><input id="ap-addr" placeholder="e.g. 8 Albyn Grove, Aberdeen"></div>
+      <div class="field"><label for="ap-rent">Monthly rent (£)</label><input id="ap-rent" type="number" min="0" value="725"></div>
+      <div class="field"><label>Gas supply at the property?</label>
+        <div class="seg" id="ap-gas">
+          <button class="sel" onclick="pickSeg(this,'ap-gas')">Yes</button>
+          <button onclick="pickSeg(this,'ap-gas')">No</button>
+        </div>
+      </div>
+      <div class="field"><label for="ap-tenant">Tenant name (leave blank if vacant)</label><input id="ap-tenant" placeholder="e.g. Anna MacLeod"></div>
+      <div class="modal-foot">
+        <button class="btn line" onclick="closeModal('addprop-overlay')">Cancel</button>
+        <button class="btn gold" onclick="confirmAddProp()">Add property</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit trade profile modal -->
+<div class="overlay" id="prof-overlay" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Edit public profile</h3>
+      <p>Certification numbers are shown as provided by you, unverified, until verification launches.</p>
+    </div>
+    <div class="modal-body">
+      <div class="field"><label for="pf-biz">Business name</label><input id="pf-biz"></div>
+      <div class="field"><label for="pf-gs">Gas Safe number</label><input id="pf-gs"></div>
+      <div class="field"><label for="pf-area">Base area</label><input id="pf-area"></div>
+      <div class="field"><label for="pf-rad">Travel radius (miles)</label><input id="pf-rad" type="number" min="1" max="60"></div>
+      <div class="modal-foot">
+        <button class="btn line" onclick="closeModal('prof-overlay')">Cancel</button>
+        <button class="btn gold" onclick="confirmProfile()">Save profile</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Legal modal -->
+<div class="overlay" id="legal-overlay" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="legal-title"></h3>
+      <p>DRAFT — for review by a Scots-qualified solicitor before public launch.</p>
+    </div>
+    <div class="modal-body">
+      <div class="docpaper" id="legal-body" style="margin-bottom:0"></div>
+      <div class="modal-foot" style="margin-top:16px"><button class="btn line" onclick="closeModal('legal-overlay')">Close</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="td"></span><span id="toast-msg"></span></div>
+
+<script>
+/* ============================================================
+   Slate — standalone edition
+   Append-only ledger, per-property data, persisted to this device.
+============================================================ */
+'use strict';
+const $ = id => document.getElementById(id);
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const MONS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const fmtD = iso => { const d=new Date(iso); return `${String(d.getDate()).padStart(2,'0')} ${MONS[d.getMonth()]} ${d.getFullYear()}`; };
+const fmtDT = iso => { const d=new Date(iso); return `${fmtD(iso)} · ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; };
+const nowISO = () => new Date().toISOString();
+const daysUntil = iso => Math.floor((new Date(iso) - new Date(new Date().toDateString())) / 86400000);
+const daysSince = iso => -daysUntil(iso);
+
+/* ================= Seed data ================= */
+const STORE_KEY='slate-standalone-v1';
+function seed(){
+  return {
+    v:1,
+    users:{
+      landlord:{name:'Moira Fraser', email:'moira.fraser@slate.demo', regNo:'123456/100/27210'},
+      tenant:{name:'Callum Stewart', email:'callum.stewart@slate.demo'},
+      trade:{name:'Gordon Burnett', email:'gordon@gbplumbing.demo'},
+    },
+    profile:{biz:'Gordon Burnett Plumbing & Heating', gasSafe:'558214', area:'Aberdeen AB25', radius:15, baseJobs:38, baseRating:4.9},
+    props:[
+      {id:'p1', addr:'12 Rosemount Place, Aberdeen', tenant:'Callum Stewart', tenantSince:'2024-07-01', rent:725, gas:true, deposit:'SafeDeposits Scotland', dist:0.8},
+      {id:'p2', addr:'4 Ferryhill Gardens, Aberdeen', tenant:'Isla Murray', tenantSince:'2023-03-01', rent:725, gas:true, deposit:'SafeDeposits Scotland', dist:1.6},
+      {id:'p3', addr:'27 King Street, Aberdeen', tenant:null, tenantSince:null, rent:725, gas:false, deposit:null, dist:2.3},
+    ],
+    certs:[
+      {id:'c1', propId:'p1', name:'Gas Safety (CP12)', expires:'2026-07-14', ref:'GS-2025-8841'},
+      {id:'c2', propId:'p1', name:'EICR', expires:'2030-03-02', ref:'EI-2025-1190'},
+      {id:'c3', propId:'p1', name:'EPC', expires:'2033-11-18', ref:'EP-9921-CC', extra:'Rating C'},
+      {id:'c4', propId:'p1', name:'Smoke & heat alarms (interlinked)', expires:'2027-01-20', ref:'SC-2026-0148'},
+      {id:'c5', propId:'p1', name:'Legionella risk assessment', expires:'2027-07-01', ref:'LG-2025-4410'},
+      {id:'c6', propId:'p2', name:'Gas Safety (CP12)', expires:'2027-02-03', ref:'GS-2026-0214'},
+      {id:'c7', propId:'p2', name:'EICR', expires:'2028-03-15', ref:'EI-2023-0871'},
+      {id:'c8', propId:'p2', name:'EPC', expires:'2031-05-22', ref:'EP-7702-BD', extra:'Rating C'},
+      {id:'c9', propId:'p2', name:'Smoke & heat alarms (interlinked)', expires:'2027-03-12', ref:'SC-2026-0312'},
+      {id:'c10', propId:'p2', name:'Legionella risk assessment', expires:'2027-03-01', ref:'LG-2025-2208'},
+      {id:'c11', propId:'p3', name:'EICR', expires:'2029-09-30', ref:'EI-2024-5520'},
+      {id:'c12', propId:'p3', name:'EPC', expires:'2032-02-10', ref:'EP-5530-CC', extra:'Rating C'},
+      {id:'c13', propId:'p3', name:'Smoke & heat alarms (interlinked)', expires:'2026-05-30', ref:'SC-2025-7716'},
+      {id:'c14', propId:'p3', name:'Legionella risk assessment', expires:'2026-07-20', ref:'LG-2024-9931'},
+    ],
+    issues:[
+      {id:'i1', propId:'p2', title:'Dripping kitchen tap', tenant:'Isla Murray', urgency:'Routine', status:'booked',
+       desc:'Cold tap drips constantly even when fully off.', reportedAt:'2026-06-05T10:14:00',
+       trade:'Gordon Burnett Plumbing & Heating', quote:85, when:'Tue 17 Jun, 9–11am', photos:[]},
+    ],
+    docs:[
+      {id:'d1', propId:'p1', name:'Tenancy variation — 12 Rosemount Place', kind:'Tenancy variation · pet addendum',
+       clause:'Variation to the private residential tenancy at 12 Rosemount Place, Aberdeen: the tenant may keep one cat at the property, subject to professional cleaning at the end of the tenancy. All other terms of the agreement dated 1 July 2024 continue unchanged.',
+       sigLL:{name:'Moira Fraser', at:'2026-06-09T09:41:00', email:'moira.fraser@slate.demo', ua:'recorded at signing', hash:'9c41ad22f0e0…(seed)'}, sigTN:null},
+      {id:'d2', propId:'p1', name:'Inventory & schedule of condition', kind:'Check-in inventory',
+       clause:'Inventory and schedule of condition for 12 Rosemount Place, Aberdeen, agreed at the start of the private residential tenancy on 1 July 2024.',
+       sigLL:{name:'Moira Fraser', at:'2024-07-01T11:05:00', email:'moira.fraser@slate.demo', ua:'recorded at signing', hash:'2b7e151628ae…(seed)'},
+       sigTN:{name:'Callum Stewart', at:'2024-07-01T11:09:00', email:'callum.stewart@slate.demo', ua:'recorded at signing', hash:'2b7e151628ae…(seed)'}},
+    ],
+    payments:[ /* current month, per occupied property */
+      {propId:'p1', month:'2026-06', paidOn:'2026-06-01'},
+      {propId:'p2', month:'2026-06', paidOn:null},
+    ],
+    hist:{p1:[1,1,1,1,1,1], p2:[1,1,0,1,1,2], p3:[2,2,2,2,2,2]},
+    tnRent:[
+      {d:'2026-06-01', amt:725, ref:'SL-RNT-2606'},
+      {d:'2026-05-01', amt:725, ref:'SL-RNT-2605'},
+      {d:'2026-04-01', amt:725, ref:'SL-RNT-2604'},
+      {d:'2026-03-01', amt:725, ref:'SL-RNT-2603'},
+      {d:'2026-02-01', amt:725, ref:'SL-RNT-2602'},
+      {d:'2026-01-01', amt:725, ref:'SL-RNT-2601'},
+    ],
+    ledger:[
+      {t:'2026-06-09T09:41:00', propId:'p1', who:'Landlord', x:'<strong>Tenancy variation</strong> signed by Moira Fraser — awaiting tenant'},
+      {t:'2026-06-05T10:14:00', propId:'p2', who:'Tenant', x:'Issue reported: <strong>dripping kitchen tap</strong> — routine priority'},
+      {t:'2026-06-06T08:30:00', propId:'p2', who:'Landlord', x:'Quote accepted: <strong>dripping kitchen tap</strong> — Gordon Burnett Plumbing & Heating, £85, Tue 17 Jun'},
+      {t:'2026-06-01T09:02:00', propId:'p1', who:'Tenant', x:'<strong>Rent received</strong> — £725, on time, month 23 of 23'},
+      {t:'2026-03-02T16:40:00', propId:'p1', who:'Trade', x:'<strong>EICR completed</strong> by Watts Electrical — EI-2025-1190 filed'},
+      {t:'2026-05-30T12:00:00', propId:'p3', who:'Landlord', x:'<strong>Alarm check</strong> logged as due — interlinked smoke & heat alarms'},
+      {t:'2024-07-01T11:09:00', propId:'p1', who:'Both', x:'<strong>Tenancy began</strong> — agreement and inventory signed by both parties'},
+    ],
+    msgs:{
+      lt:[
+        {from:'tenant', text:'Hi Moira — just to say the new fan in the bathroom is working a treat. Cheers!', t:'2026-06-08T14:20:00'},
+        {from:'landlord', text:'Great to hear, Callum. The pet addendum is ready in your documents whenever you have a minute.', t:'2026-06-08T16:05:00'},
+      ],
+      ltr:[
+        {from:'trade', text:'Morning Moira — confirmed for the tap at Ferryhill Gardens, Tue 9–11. I\'ll message Isla the night before.', t:'2026-06-09T08:12:00'},
+        {from:'landlord', text:'Perfect, thanks Gordon. Invoice through Slate as usual please.', t:'2026-06-09T08:30:00'},
+      ],
+    },
+    reviews:[
+      {stars:5, text:'Fitted a new boiler in a day, left the place spotless. Certificate uploaded before he\'d left the drive.', by:'Landlord · Stonehaven', at:'2026-05-10'},
+      {stars:5, text:'Came out same day for a leak. Kept the tenant informed the whole way.', by:'Landlord · Westhill', at:'2026-04-22'},
+    ],
+    notifs:{landlord:[], tenant:[], trade:[]},
+    hiddenJobs:[],
+    seq:100,
+  };
+}
+
+let D;
+function load(){
+  try{ const raw=localStorage.getItem(STORE_KEY); if(raw){ const d=JSON.parse(raw); if(d && d.v===1){ D=d; return; } } }catch(e){}
+  D=seed();
+}
+function save(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(D)); }catch(e){ /* storage full or unavailable — app keeps working in memory */ } }
+function uid(p){ return p + (++D.seq); }
+
+/* Append-only: the only way anything reaches the ledger. Entries are never edited or removed. */
+function ledger(propId, who, html){ D.ledger.unshift({t:nowISO(), propId, who, x:html}); }
+
+/* Transient UI state (not persisted) */
+const T={ role:'landing', urgency:'Soon', llThread:'tenant', signingDocId:null, quoteId:null, completeId:null, reviewId:null,
+          propId:null, propTab:'Ledger', issuePhoto:null, completePhoto:null };
+
+/* ================= Toast / notifications ================= */
+let toastTimer;
+function toast(m){ $('toast-msg').textContent=m; $('toast').classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>$('toast').classList.remove('show'),3400); }
+function notify(role, text){
+  D.notifs[role].unshift({text, t:nowISO(), read:false});
+  if(D.notifs[role].length>30) D.notifs[role].length=30;
+  if(T.role!==role) $('pip-'+role).classList.add('on');
+  renderBell();
+}
+function unreadCount(role){ return (D.notifs[role]||[]).filter(n=>!n.read).length; }
+function renderBell(){
+  if(T.role==='landing'||T.role==='prop'){ return; }
+  const n=unreadCount(T.role);
+  $('bell-n').textContent=n>9?'9+':n; $('bell-n').classList.toggle('on',n>0);
+}
+function toggleNotifs(){
+  const p=$('notif-panel'); const open=p.classList.toggle('open');
+  if(open){
+    const list=D.notifs[T.role==='prop'?'landlord':T.role]||[];
+    $('notif-list').innerHTML=list.length?list.map(n=>`<div class="ni">${esc(n.text)}<div class="nt">${fmtDT(n.t)}</div></div>`).join('')
+      :'<div class="nempty">Nothing yet. Activity that needs you lands here.</div>';
+    list.forEach(n=>n.read=true); save(); renderBell();
+  }
+}
+document.addEventListener('click',e=>{ const p=$('notif-panel'); if(p.classList.contains('open') && !p.contains(e.target) && e.target.id!=='bell' && !$('bell').contains(e.target)) p.classList.remove('open'); });
+
+/* ================= Compliance ================= */
+const REQUIRED = prop => [prop.gas?'Gas Safety (CP12)':null,'EICR','EPC','Smoke & heat alarms (interlinked)','Legionella risk assessment'].filter(Boolean);
+function certStatus(c){ const d=daysUntil(c.expires); return d<0?'due':d<=60?'warn':'ok'; }
+function certPillText(c){ const d=daysUntil(c.expires); return d<0?`Overdue`:fmtD(c.expires); }
+function scoreOf(propId){
+  const prop=D.props.find(p=>p.id===propId);
+  const certs=D.certs.filter(c=>c.propId===propId);
+  const factors=[];
+  REQUIRED(prop).forEach(req=>{
+    const c=certs.find(x=>x.name===req);
+    if(!c){ factors.push({pts:18, txt:`${req} not on file`}); return; }
+    const st=certStatus(c);
+    if(st==='due') factors.push({pts:18, txt:`${req} overdue`});
+    else if(st==='warn') factors.push({pts:8, txt:`${req} expires within 60 days (${fmtD(c.expires)})`});
+  });
+  D.issues.filter(i=>i.propId===propId && i.status!=='done' && daysSince(i.reportedAt)>14)
+    .forEach(i=>factors.push({pts:5, txt:`"${i.title}" open more than 14 days`}));
+  const score=Math.max(0, 100 - factors.reduce((a,f)=>a+f.pts,0));
+  return {score, factors};
+}
+function ring(score){
+  const r=25,c=2*Math.PI*r,off=c*(1-score/100);
+  const col=score>=90?'var(--ok)':score>=80?'var(--warn)':'var(--due)';
+  return `<div class="ring"><svg width="60" height="60"><circle cx="30" cy="30" r="${r}" fill="none" stroke="var(--line)" stroke-width="4.5"/><circle cx="30" cy="30" r="${r}" fill="none" stroke="${col}" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${off}"/></svg><div class="rv">${score}</div></div>`;
+}
+const FLOW=['reported','sent','quoted','booked','done'];
+const FLABEL={reported:'Reported',sent:'Sent to trades',quoted:'Quote in',booked:'Booked',done:'Complete'};
+function stepper(st){const i=FLOW.indexOf(st);return `<div class="steps">${FLOW.map((s,k)=>`<div class="step ${k<i?'done':k===i?'now done':''}"><div class="sd"></div><div class="sl">${FLABEL[s]}</div></div>`).join('')}</div>`;}
+function urgPill(u){ return `<span class="pill ${u==='Urgent'?'due':u==='Soon'?'warn':'neutral'}">${u}</span>`; }
+
+/* ================= Navigation ================= */
+function greeting(){ const h=new Date().getHours(); return h<12?'Good morning':h<18?'Good afternoon':'Good evening'; }
+function banners(){
+  const word=n=>['zero','one','two','three','four','five'][n]||String(n);
+  const llAttention=[]; let llCount=0;
+  if(D.payments.some(p=>!p.paidOn && D.props.find(x=>x.id===p.propId && x.tenant))){ llAttention.push('one rent payment'); llCount++; }
+  const certIssues=D.certs.filter(c=>certStatus(c)!=='ok').length;
+  if(certIssues){ llAttention.push(`${word(certIssues)} certificate${certIssues>1?'s':''}`); llCount+=certIssues; }
+  const llSub=llAttention.length?(s=>s[0].toUpperCase()+s.slice(1))(`${llAttention.join(' and ')} need${llCount===1?'s':''} your attention.`):'Everything across the portfolio is in order.';
+  return {
+    landlord:{h1:`${greeting()}, <em>Moira</em>`, sub: llSub, nm:'Moira Fraser', rl:`Landlord · ${D.props.length} properties`},
+    tenant:{h1:'Hello, <em>Callum</em>', sub:'Your home at 12 Rosemount Place — your tenancy, your record, in one place.', nm:'Callum Stewart', rl:'Tenant · 12 Rosemount Place'},
+    trade:{h1:'Welcome back, <em>Gordon</em>', sub:'New work is matched to your trade and travel area the moment a landlord approves it.', nm:D.users.trade.name, rl:'Plumbing & Heating · Gas Safe'},
+  };
+}
+function enterApp(){ setRole('landlord'); toast('You\'re in — switch roles top-right to be all three sides.'); }
+function goLanding(){
+  T.role='landing';
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  $('view-landing').classList.add('active');
+  $('land-nav').style.display='flex'; $('app-nav').style.display='none'; $('exit-demo').style.display='none'; $('bell').style.display='none';
+  $('notif-panel').classList.remove('open');
+  window.scrollTo({top:0});
+}
+function setRole(r){
+  T.role=r; T.propId=null;
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  $('app-banner').classList.add('active'); $('view-'+r).classList.add('active'); $('app-foot').classList.add('active');
+  $('land-nav').style.display='none'; $('app-nav').style.display='flex'; $('exit-demo').style.display='block'; $('bell').style.display='grid';
+  $('notif-panel').classList.remove('open');
+  ['landlord','tenant','trade'].forEach(k=>{
+    $('rb-'+k).classList.toggle('active',k===r);
+    if(k===r) $('pip-'+k).classList.remove('on');
+  });
+  const b=banners()[r];
+  $('banner-h1').innerHTML=b.h1; $('banner-sub').textContent=b.sub; $('who-nm').textContent=b.nm; $('who-rl').textContent=b.rl;
+  window.scrollTo({top:0});
+  renderAll(); renderBell();
+}
+function openProp(id){
+  T.propId=id; T.propTab='Ledger';
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  $('app-banner').classList.add('active'); $('view-prop').classList.add('active'); $('app-foot').classList.add('active');
+  window.scrollTo({top:0});
+  renderProp();
+}
+function closeProp(){ setRole('landlord'); }
+
+/* ================= Renderers ================= */
+function renderPortfolio(){
+  $('portfolio').innerHTML=D.props.map(p=>{
+    const {score}=scoreOf(p.id);
+    const tags=[];
+    const certs=D.certs.filter(c=>c.propId===p.id);
+    const due=certs.filter(c=>certStatus(c)==='due'), warn=certs.filter(c=>certStatus(c)==='warn');
+    if(!due.length && !warn.length) tags.push(['ok','Fully compliant']);
+    else { if(due.length) tags.push(['due', due.length===1?`${shortCert(due[0].name)} overdue`:`${due.length} certs overdue`]);
+           if(warn.length) tags.push(['warn', warn.length===1?`${shortCert(warn[0].name)} due ${MONS[new Date(warn[0].expires).getMonth()]}`:`${warn.length} certs expiring`]); }
+    if(!p.tenant) tags.push(['neutral','Vacant']);
+    return `<div class="prop">${ring(score)}
+      <div class="prop-info">
+        <div class="addr">${esc(p.addr)}</div><div class="ten">${p.tenant?`${esc(p.tenant)} · since ${MONS[new Date(p.tenantSince).getMonth()]} ${new Date(p.tenantSince).getFullYear()}`:'Vacant · advertised'}</div>
+        <div class="prop-tags">${tags.map(t=>`<span class="pill ${t[0]}"><span class="d"></span>${esc(t[1])}</span>`).join('')}</div>
+      </div>
+      <button class="btn line sm" onclick="openProp('${p.id}')">View</button>
+    </div>`;
+  }).join('');
+}
+function shortCert(n){ return n.startsWith('Gas')?'Gas cert':n.startsWith('Smoke')?'Alarm check':n.startsWith('Legionella')?'Legionella':n.split(' ')[0]; }
+
+function renderRentLL(){
+  const now=new Date();
+  $('rent-month-label').textContent=`Rent — ${MONS[now.getMonth()]==='Jun'?'June':MONS[now.getMonth()]} ${now.getFullYear()}`;
+  const occ=D.props.filter(p=>p.tenant);
+  const due=occ.reduce((a,p)=>a+p.rent,0);
+  const collected=D.payments.filter(p=>p.paidOn).reduce((a,p)=>{const pr=D.props.find(x=>x.id===p.propId); return a+(pr?pr.rent:0);},0);
+  const outstanding=occ.length - D.payments.filter(p=>p.paidOn).length;
+  $('rent-total').textContent='£'+collected.toLocaleString();
+  $('rent-due-label').textContent=`Collected of £${due.toLocaleString()} due`;
+  $('rent-flag').innerHTML=outstanding>0?`<span class="pill warn"><span class="d"></span>${outstanding} payment${outstanding>1?'s':''} outstanding</span>`:`<span class="pill ok"><span class="d"></span>All rent in</span>`;
+  $('rent-tbl').innerHTML=`<tr><th>Property</th><th>Last 6 mo</th><th>This month</th></tr>`+D.props.map(p=>{
+    const pay=D.payments.find(x=>x.propId===p.id);
+    let cell;
+    if(!p.tenant) cell=`<span class="pill neutral"><span class="d"></span>No tenancy</span>`;
+    else if(pay && pay.paidOn) cell=`<span class="pill ok"><span class="d"></span>Paid ${fmtD(pay.paidOn).slice(0,6)}</span>`;
+    else {
+      const late=daysSince(new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0')+'-01');
+      cell=`<span class="pill ${late>10?'due':'warn'}"><span class="d"></span>${late} days late</span> <button class="btn line sm" style="margin-left:6px" onclick="markRent('${p.id}')">Mark received</button>`;
+    }
+    const hist=D.hist[p.id]||[2,2,2,2,2,2];
+    return `<tr>
+      <td><div style="font-weight:600;font-size:13px">${esc(p.addr.split(',')[0])}</div><div class="mono">${esc(p.tenant||'Vacant')} · £${p.rent} · due 1st</div></td>
+      <td><div class="sixmo">${hist.map(h=>`<span class="${h===0?'miss':h===2?'pend':''}" style="height:${h===2?'30':'100'}%"></span>`).join('')}</div></td>
+      <td>${cell}</td>
+    </tr>`;
+  }).join('');
+}
+function renderRentTN(){
+  $('tn-rent').innerHTML=`<tr><th>Date</th><th>Amount</th><th>Status</th></tr>`+D.tnRent.slice(0,4).map(r=>`
+    <tr><td><div style="font-size:13px">${fmtD(r.d)}</div><div class="mono">${r.ref}</div></td><td class="amt">£${r.amt.toFixed(2)}</td><td><span class="pill ok"><span class="d"></span>Paid on time</span></td></tr>`).join('');
+}
+function certRowActions(c){
+  const st=certStatus(c);
+  if(st==='ok') return '';
+  return ` <button class="btn line sm" style="margin-top:6px" onclick="postJobFromCert('${c.id}')">Post job from this certificate</button>`;
+}
+function renderCerts(){
+  const sorted=[...D.certs].sort((a,b)=>{const o={due:0,warn:1,ok:2}; return o[certStatus(a)]-o[certStatus(b)] || new Date(a.expires)-new Date(b.expires);});
+  $('cert-tbl').innerHTML=`<tr><th>Certificate</th><th>Expires</th></tr>`+sorted.map(c=>{
+    const prop=D.props.find(p=>p.id===c.propId);
+    return `<tr><td><div style="font-weight:600;font-size:13px">${esc(c.name)}${c.extra?` — ${esc(c.extra)}`:''}</div><div class="mono">${esc(prop?prop.addr.split(',')[0]:'')} · ${esc(c.ref)}</div>${certRowActions(c)}</td>
+    <td><span class="pill ${certStatus(c)}"><span class="d"></span>${certPillText(c)}</span></td></tr>`;
+  }).join('');
+  $('tn-certs').innerHTML=D.certs.filter(c=>c.propId==='p1').map(c=>`
+    <div class="docrow"><div class="doc-ic">PDF</div>
+      <div class="flex1"><div class="dn">${esc(c.name)}${c.extra?` — ${esc(c.extra)}`:''}</div><div class="dm">Valid until ${fmtD(c.expires)} · ${esc(c.ref)}</div></div>
+      <button class="btn line sm" onclick="viewCert('${c.id}')">View</button></div>`).join('');
+}
+function issueCardLL(i){
+  let a='';
+  if(i.status==='reported')a=`<button class="btn gold sm" onclick="sendToTrades('${i.id}')">Send to trades</button><button class="btn line sm" onclick="llThread('tenant')">Message tenant</button>`;
+  if(i.status==='sent')a=`<span class="pill gold"><span class="d"></span>Waiting for quotes — 3 trades notified</span>`;
+  if(i.status==='quoted')a=`<div class="quotebox">Quote <strong>£${i.quote}</strong> — ${esc(i.trade)} · ${esc(i.when)}${i.quoteNote?` · <span style="color:var(--mut)">${esc(i.quoteNote)}</span>`:''}<button class="btn gold sm" onclick="acceptQuote('${i.id}')">Accept &amp; book</button></div>`;
+  if(i.status==='booked')a=`<span class="pill ok"><span class="d"></span>Booked — ${esc(i.trade)} · ${esc(i.when)} · £${i.quote}</span>`;
+  if(i.status==='done')a=`<span class="pill ok"><span class="d"></span>Completed by ${esc(i.trade)} · invoice £${i.invoiceAmt||i.quote}</span>${i.review?`<span class="pill gold">Reviewed ${'★'.repeat(i.review.stars)}</span>`:`<button class="btn line sm" onclick="openReview('${i.id}')">Leave a review</button>`}`;
+  const prop=D.props.find(p=>p.id===i.propId);
+  return `<div class="issue"><div class="issue-top"><div class="issue-icon">🛠</div>
+    <div class="issue-body"><div class="it">${esc(i.title)} <span style="margin-left:6px">${urgPill(i.urgency)}</span></div>
+    <div class="im">${esc(prop?prop.addr.split(',')[0]:'')} · reported by ${esc(i.tenant)} · ${fmtD(i.reportedAt)}</div>
+    <div style="font-size:13px;margin-top:6px;color:var(--mut)">${esc(i.desc)}</div>
+    ${i.photos&&i.photos.length?`<div class="photo-thumbs">${i.photos.map(p=>`<img src="${p}" alt="Issue photo">`).join('')}</div>`:''}
+    </div></div>
+    <div class="issue-actions">${a}</div></div>`;
+}
+function renderLLIssues(){
+  const open=D.issues.filter(i=>i.status!=='done');
+  const recentDone=D.issues.filter(i=>i.status==='done' && !i.review).slice(0,2);
+  const list=[...open,...recentDone];
+  $('ll-issues').innerHTML=list.length?list.map(issueCardLL).join(''):`<div class="empty"><div class="ei">✓</div>No open issues across your portfolio.</div>`;
+}
+function renderTNIssues(){
+  const m=D.issues.filter(i=>i.propId==='p1');
+  $('tn-issues').innerHTML=m.length?m.map(i=>`
+    <div class="issue"><div class="issue-top"><div class="issue-icon">🛠</div>
+      <div class="issue-body"><div class="it">${esc(i.title)}</div>
+      <div class="im">Reported ${fmtD(i.reportedAt)} · ${i.urgency.toLowerCase()} priority</div>
+      ${i.status==='booked'?`<div style="font-size:13px;margin-top:6px;font-weight:600;color:var(--ok)">${esc(i.trade)} is coming ${esc(i.when)}.</div>`:''}
+      ${i.status==='done'?`<div style="font-size:13px;margin-top:6px;font-weight:600;color:var(--ok)">Fixed by ${esc(i.trade)} — on your home's record.</div>`:''}
+      </div></div>${stepper(i.status)}</div>`).join('')
+    :`<div class="empty"><div class="ei">☀</div>Nothing reported. If something breaks, use the form opposite — your landlord is notified straight away.</div>`;
+}
+function renderDocs(){
+  $('ll-docs').innerHTML=D.docs.map(d=>`
+    <div class="docrow"><div class="doc-ic">PDF</div>
+      <div class="flex1"><div class="dn">${esc(d.name)}</div><div class="dm">${esc(d.kind)}</div></div>
+      ${d.sigTN?`<button class="btn line sm" onclick="viewDoc('${d.id}')">View</button><span class="pill ok"><span class="d"></span>Signed by both</span>`:`<span class="pill warn"><span class="d"></span>Awaiting tenant</span>`}</div>`).join('');
+  const tnDocs=D.docs.filter(d=>d.propId==='p1');
+  $('tn-docs').innerHTML=tnDocs.length?tnDocs.map(d=>`
+    <div class="docrow"><div class="doc-ic">PDF</div>
+      <div class="flex1"><div class="dn">${esc(d.name)}</div><div class="dm">${esc(d.kind)}</div></div>
+      ${d.sigTN?`<button class="btn line sm" onclick="viewDoc('${d.id}')">View</button>`:`<button class="btn gold sm" onclick="openSign('${d.id}')">Review &amp; sign</button>`}</div>`).join('')
+    :`<div class="empty"><div class="ei">📄</div>Nothing waiting for you. Documents your landlord sends arrive here.</div>`;
+}
+function ledgerHTML(entries){
+  return entries.map((e,i)=>`<div class="ledger-item ${i>4?'muted':''}"><div class="lt">${fmtDT(e.t)}</div><div class="lx">${e.x}</div><div class="lwho">${esc(e.who)}</div></div>`).join('');
+}
+function renderLedger(){ $('ledger').innerHTML=ledgerHTML(D.ledger.filter(e=>e.propId==='p1').slice(0,8)); }
+function renderJobs(){
+  $('tr-jobs-label').textContent=`Jobs near you — ${D.profile.area.split(' ')[0]} · ${D.profile.radius} mi`;
+  const open=D.issues.filter(i=>(i.status==='sent'||i.status==='quoted') && !D.hiddenJobs.includes(i.id));
+  $('tr-jobs').innerHTML=open.length?open.map(j=>{
+    const prop=D.props.find(p=>p.id===j.propId);
+    return `<div class="job"><div class="jt">${esc(j.title)} ${urgPill(j.urgency)}${j.status==='quoted'?'<span class="pill gold">Your quote sent</span>':''}</div>
+      <div class="jm">Aberdeen · ${prop?prop.dist:1.0} mi · verified landlord · no lead fee</div>
+      <div class="jd">${esc(j.desc)}</div>
+      ${j.photos&&j.photos.length?`<div class="photo-thumbs">${j.photos.map(p=>`<img src="${p}" alt="Issue photo">`).join('')}</div>`:''}
+      <div class="issue-actions">${j.status==='sent'
+        ?`<button class="btn gold sm" onclick="openQuote('${j.id}')">Send a quote</button><button class="btn line sm" onclick="hideJob('${j.id}')">Not for me</button>`
+        :`<span class="pill warn"><span class="d"></span>£${j.quote} quoted — waiting on landlord</span>`}</div></div>`;
+  }).join('')
+    :`<div class="empty"><div class="ei">📡</div>No open jobs right now. You'll be notified the moment a landlord approves work matching <strong>plumbing &amp; heating</strong> within ${D.profile.radius} miles.</div>`;
+  const bk=D.issues.filter(i=>i.status==='booked');
+  $('tr-booked').innerHTML=bk.length?bk.map(j=>{
+    const prop=D.props.find(p=>p.id===j.propId);
+    return `<div class="job"><div class="jt">${esc(j.title)}</div>
+      <div class="jm">${esc(prop?prop.addr.split(',')[0]:'')} · ${esc(j.when)} · agreed £${j.quote}</div>
+      <div class="issue-actions"><button class="btn gold sm" onclick="openComplete('${j.id}')">Mark complete &amp; file invoice</button><button class="btn line sm" onclick="document.getElementById('tr-msg').focus()">Message</button></div></div>`;
+  }).join('')
+    :`<div class="empty"><div class="ei">🗓</div>Nothing booked in yet.</div>`;
+}
+function renderTradeProf(){
+  const myDone=D.issues.filter(i=>i.status==='done' && i.trade===D.profile.biz).length;
+  const jobs=D.profile.baseJobs+myDone;
+  const extra=D.reviews.filter(r=>r.inApp);
+  const rating=(((D.profile.baseRating*D.profile.baseJobs)+extra.reduce((a,r)=>a+r.stars,0))/(D.profile.baseJobs+extra.length)).toFixed(1);
+  $('tr-prof').innerHTML=`
+    <div class="tn">${esc(D.profile.biz)}</div>
+    <div class="tt">Gas Safe registered · No. ${esc(D.profile.gasSafe)} <span style="font-size:10.5px;color:var(--dim)">(as provided, unverified)</span> · ${esc(D.profile.area)}</div>
+    <div class="stars">★★★★★ <span style="color:var(--mut);font-size:12px;letter-spacing:0">${rating} from ${jobs} jobs</span></div>
+    <div class="stat-row">
+      <div class="st"><div class="v">${jobs}</div><div class="l">Jobs done</div></div>
+      <div class="st"><div class="v">2h</div><div class="l">Avg response</div></div>
+      <div class="st"><div class="v">96%</div><div class="l">Quotes won</div></div>
+    </div>
+    <div style="margin-top:20px"><button class="btn gold sm" onclick="openProfile()">Edit public profile</button></div>`;
+  $('tr-reviews').innerHTML=D.reviews.slice(0,4).map((r,k)=>`
+    <div${k>0?' style="border-top:1px solid var(--line-soft);padding-top:16px"':''}>
+      <div style="color:var(--gold);font-size:13px;letter-spacing:2px">${'★'.repeat(r.stars)}</div>
+      <div style="font-size:13.5px;margin-top:5px">"${esc(r.text)}"</div>
+      <div style="font-size:11.5px;color:var(--dim);margin-top:4px">${esc(r.by)} · ${fmtD(r.at).slice(3)}</div>
+    </div>`).join('');
+}
+function renderTenancy(){
+  const p=D.props.find(x=>x.id==='p1');
+  $('tn-tenancy').innerHTML=`
+    <div class="kv"><span class="k">Tenancy type</span><span class="v">Private Residential Tenancy</span></div>
+    <div class="kv"><span class="k">Began</span><span class="v">${fmtD(p.tenantSince)}</span></div>
+    <div class="kv"><span class="k">Rent</span><span class="v">£${p.rent} / month · due 1st</span></div>
+    <div class="kv"><span class="k">Landlord</span><span class="v">Moira Fraser</span></div>
+    <div class="kv"><span class="k">Landlord registration</span><span class="v mono">${esc(D.users.landlord.regNo)} · Aberdeen City Council</span></div>
+    <div class="kv"><span class="k">Deposit</span><span class="v">${esc(p.deposit)}</span></div>`;
+}
+function renderChats(){
+  const NL={landlord:'Moira',tenant:'Callum',trade:'Gordon'};
+  const bub=(m,me)=>`<div class="bubble ${m.from===me?'me':'them'}">${m.from===me?'':`<div class="bwho">${NL[m.from]}</div>`}${esc(m.text)}<div class="bt">${fmtDT(m.t)}</div></div>`;
+  const thread=T.llThread==='tenant'?D.msgs.lt:D.msgs.ltr;
+  $('ll-chat').innerHTML=thread.map(m=>bub(m,'landlord')).join('');
+  $('tn-chat').innerHTML=D.msgs.lt.map(m=>bub(m,'tenant')).join('');
+  $('tr-chat').innerHTML=D.msgs.ltr.map(m=>bub(m,'trade')).join('');
+  ['ll-chat','tn-chat','tr-chat'].forEach(id=>{const el=$(id); el.scrollTop=el.scrollHeight;});
+}
+function renderAll(){ renderPortfolio(); renderRentLL(); renderRentTN(); renderCerts(); renderLLIssues(); renderTNIssues(); renderDocs(); renderLedger(); renderJobs(); renderChats(); renderTradeProf(); renderTenancy(); save(); }
+
+/* ===== Property detail ===== */
+const PTABS=['Ledger','Certificates','Documents','Rent','Issues','Tenancy'];
+function renderProp(){
+  const p=D.props.find(x=>x.id===T.propId); if(!p){ closeProp(); return; }
+  const {score,factors}=scoreOf(p.id);
+  $('prop-head').innerHTML=`<div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap">${ring(score)}
+    <div><div style="font-family:var(--fd);font-size:26px;font-weight:300">${esc(p.addr)}</div>
+    <div style="font-size:13.5px;color:var(--mut);margin-top:3px">${p.tenant?`${esc(p.tenant)} · Private Residential Tenancy since ${fmtD(p.tenantSince)}`:'Vacant · advertised'}</div></div></div>`;
+  $('prop-tabs').innerHTML=PTABS.map(t=>`<button class="${T.propTab===t?'on':''}" onclick="T.propTab='${t}';renderProp()">${t}</button>`).join('');
+  let body='';
+  if(T.propTab==='Ledger'){
+    const entries=D.ledger.filter(e=>e.propId===p.id);
+    body=`<div class="card card-pad">${entries.length?`<div class="ledger">${ledgerHTML(entries)}</div>`:`<div class="empty"><div class="ei">∞</div>The record starts with the first action on this property.</div>`}</div>`;
+  }
+  if(T.propTab==='Certificates'){
+    const cs=D.certs.filter(c=>c.propId===p.id);
+    body=`<div class="card"><table class="tbl"><tr><th>Certificate</th><th>Expires</th></tr>${cs.map(c=>`<tr><td><div style="font-weight:600;font-size:13px">${esc(c.name)}${c.extra?` — ${esc(c.extra)}`:''}</div><div class="mono">${esc(c.ref)}</div>${certRowActions(c)}</td><td><span class="pill ${certStatus(c)}"><span class="d"></span>${certPillText(c)}</span></td></tr>`).join('')||'<tr><td colspan="2"><div class="empty">No certificates on file yet.</div></td></tr>'}</table></div>
+      <div style="margin-top:14px"><button class="btn gold sm" onclick="openCertModal('${p.id}')">+ Upload a certificate</button></div>`;
+  }
+  if(T.propTab==='Documents'){
+    const ds=D.docs.filter(d=>d.propId===p.id);
+    body=`<div class="card">${ds.length?ds.map(d=>`<div class="docrow"><div class="doc-ic">PDF</div><div class="flex1"><div class="dn">${esc(d.name)}</div><div class="dm">${esc(d.kind)}</div></div>${d.sigTN?`<button class="btn line sm" onclick="viewDoc('${d.id}')">View</button><span class="pill ok"><span class="d"></span>Signed by both</span>`:`<span class="pill warn"><span class="d"></span>Awaiting tenant</span>`}</div>`).join(''):`<div class="empty"><div class="ei">📄</div>No documents yet for this property.</div>`}</div>`;
+  }
+  if(T.propTab==='Rent'){
+    const pay=D.payments.find(x=>x.propId===p.id);
+    const hist=D.hist[p.id]||[2,2,2,2,2,2];
+    body=`<div class="card card-pad">
+      <div class="kv"><span class="k">Monthly rent</span><span class="v">${p.tenant?`£${p.rent} · due 1st`:'No tenancy'}</span></div>
+      <div class="kv"><span class="k">This month</span><span class="v">${!p.tenant?'—':pay&&pay.paidOn?`Paid ${fmtD(pay.paidOn)}`:'Outstanding'}</span></div>
+      <div class="kv"><span class="k">Last six months</span><span class="v"><span class="sixmo">${hist.map(h=>`<span class="${h===0?'miss':h===2?'pend':''}" style="height:${h===2?'30':'100'}%"></span>`).join('')}</span></span></div>
+    </div>`;
+  }
+  if(T.propTab==='Issues'){
+    const is=D.issues.filter(i=>i.propId===p.id);
+    body=`<div class="card">${is.length?is.map(issueCardLL).join(''):`<div class="empty"><div class="ei">✓</div>No issues reported for this property.</div>`}</div>`;
+  }
+  if(T.propTab==='Tenancy'){
+    body=`<div class="grid two"><div class="card card-pad">
+      <div class="kv"><span class="k">Tenancy type</span><span class="v">${p.tenant?'Private Residential Tenancy':'—'}</span></div>
+      <div class="kv"><span class="k">Tenant</span><span class="v">${esc(p.tenant||'Vacant')}</span></div>
+      <div class="kv"><span class="k">Began</span><span class="v">${p.tenantSince?fmtD(p.tenantSince):'—'}</span></div>
+      <div class="kv"><span class="k">Deposit scheme</span><span class="v">${esc(p.deposit||'—')}</span></div>
+      <div class="kv"><span class="k">Landlord registration</span><span class="v mono">${esc(D.users.landlord.regNo)}</span></div>
+      <div class="kv"><span class="k">Gas at property</span><span class="v">${p.gas?'Yes':'No'}</span></div>
+    </div>
+    <div class="card card-pad"><div class="section-label" style="margin-top:0">Compliance score — ${scoreOf(p.id).score}</div>
+      ${factors.length?factors.map(f=>`<div class="factor"><span>${esc(f.txt)}</span><span class="fp">−${f.pts}</span></div>`).join(''):`<div class="factor"><span>Nothing counting against this property.</span><span class="fp plus">100</span></div>`}
+    </div></div>`;
+  }
+  $('prop-body').innerHTML=body;
+}
+
+/* ================= Messaging ================= */
+function llThread(t){ T.llThread=t; $('tab-lt').classList.toggle('on',t==='tenant'); $('tab-ltr').classList.toggle('on',t==='trade'); renderChats(); }
+function llSend(){
+  const v=$('ll-msg').value.trim(); if(!v)return;
+  (T.llThread==='tenant'?D.msgs.lt:D.msgs.ltr).push({from:'landlord',text:v,t:nowISO()});
+  $('ll-msg').value=''; renderChats(); save();
+  notify(T.llThread==='tenant'?'tenant':'trade', `New message from Moira: "${v.slice(0,60)}${v.length>60?'…':''}"`);
+  toast(`Sent — switch to the ${T.llThread==='tenant'?'Tenant':'Trade'} view to see it arrive.`);
+}
+function tnSend(){
+  const v=$('tn-msg').value.trim(); if(!v)return;
+  D.msgs.lt.push({from:'tenant',text:v,t:nowISO()});
+  $('tn-msg').value=''; renderChats(); save();
+  notify('landlord', `New message from Callum: "${v.slice(0,60)}${v.length>60?'…':''}"`);
+  toast('Sent to Moira — switch to the Landlord view to see it arrive.');
+}
+function trSend(){
+  const v=$('tr-msg').value.trim(); if(!v)return;
+  D.msgs.ltr.push({from:'trade',text:v,t:nowISO()});
+  $('tr-msg').value=''; renderChats(); save();
+  notify('landlord', `New message from Gordon: "${v.slice(0,60)}${v.length>60?'…':''}"`);
+  toast('Sent to the landlord.');
+}
+
+/* ================= Modal helpers ================= */
+function openModal(id){ $(id).classList.add('open'); }
+function closeModal(id){ $(id).classList.remove('open'); }
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{ if(e.target===e.currentTarget) o.classList.remove('open'); }));
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open')); });
+function pickSeg(b,segId){ document.querySelectorAll('#'+segId+' button').forEach(x=>x.classList.toggle('sel',x===b)); }
+function segVal(segId){ const b=document.querySelector('#'+segId+' button.sel'); return b?b.textContent:''; }
+
+/* ================= Photos ================= */
+function fileToThumb(input, cb){
+  const f=input.files && input.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{ const img=new Image(); img.onload=()=>{
+    const s=Math.min(1, 640/img.width);
+    const c=document.createElement('canvas'); c.width=Math.round(img.width*s); c.height=Math.round(img.height*s);
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+    cb(c.toDataURL('image/jpeg',.7), f.name);
+  }; img.src=r.result; };
+  r.readAsDataURL(f);
+}
+function attachIssuePhoto(input){ fileToThumb(input,(data,name)=>{ T.issuePhoto=data; $('iss-photo-chip').innerHTML=`<span class="attach-chip">${esc(name)}</span>`; toast('Photo attached — '+name); }); }
+function attachCompletePhoto(input){ fileToThumb(input,(data,name)=>{ T.completePhoto=data; $('c-photo-chip').innerHTML=`<span class="attach-chip">${esc(name)}</span>`; }); }
+
+/* ================= Repair lifecycle ================= */
+function pickUrg(b,u){ T.urgency=u; document.querySelectorAll('#iss-seg button').forEach(x=>x.classList.toggle('sel',x===b)); }
+function reportIssue(){
+  const t=$('iss-title').value.trim(), d=$('iss-desc').value.trim();
+  if(!t){ toast('Give the issue a short title first'); $('iss-title').focus(); return; }
+  D.issues.unshift({id:uid('i'), propId:'p1', title:t, desc:d||'No further detail given.', tenant:'Callum Stewart',
+    urgency:T.urgency, status:'reported', reportedAt:nowISO(), photos:T.issuePhoto?[T.issuePhoto]:[]});
+  ledger('p1','Tenant',`Issue reported: <strong>${esc(t)}</strong> — ${T.urgency.toLowerCase()} priority`);
+  $('iss-title').value=''; $('iss-desc').value=''; $('iss-photo-chip').innerHTML=''; $('iss-photo').value=''; T.issuePhoto=null;
+  notify('landlord', `Callum reported an issue at 12 Rosemount Place: "${t}"`);
+  renderAll();
+  toast('Sent — Moira has been notified. Switch to the Landlord view to see it land.');
+}
+function sendToTrades(id){
+  const i=D.issues.find(x=>x.id===id); if(!i)return; i.status='sent';
+  ledger(i.propId,'Landlord',`<strong>${esc(i.title)}</strong> approved and sent to 3 local trades`);
+  notify('trade', `New job near you: "${i.title}" — quote in the app`);
+  renderAll();
+  toast('3 matching trades notified — switch to the Trade view to quote.');
+}
+function hideJob(id){ D.hiddenJobs.push(id); renderJobs(); save(); toast('Job hidden from your board.'); }
+function openQuote(id){
+  const i=D.issues.find(x=>x.id===id); if(!i)return;
+  T.quoteId=id;
+  const prop=D.props.find(p=>p.id===i.propId);
+  $('quote-job').textContent=`${i.title} — ${prop?prop.addr:''}`;
+  $('q-amt').value=95; $('q-note').value='';
+  openModal('quote-overlay');
+}
+function confirmQuote(){
+  const i=D.issues.find(x=>x.id===T.quoteId); if(!i)return;
+  const amt=parseInt($('q-amt').value,10);
+  if(!amt || amt<1){ toast('Enter a price for the quote'); return; }
+  i.status='quoted'; i.quote=amt; i.trade=D.profile.biz; i.when=`${$('q-date').value.trim()||'Tue 17 Jun'}, ${segVal('q-seg')}`; i.quoteNote=$('q-note').value.trim();
+  ledger(i.propId,'Trade',`Quote received: <strong>£${amt}</strong> for ${esc(i.title)} — ${esc(D.profile.biz)}, ${esc(i.when)}`);
+  notify('landlord', `Quote in: £${amt} for "${i.title}" from ${D.profile.biz}`);
+  closeModal('quote-overlay'); renderAll();
+  toast(`Quote sent to the landlord — £${amt}, ${i.when}.`);
+}
+function acceptQuote(id){
+  const i=D.issues.find(x=>x.id===id); if(!i)return; i.status='booked';
+  ledger(i.propId,'Landlord',`Quote accepted: <strong>${esc(i.title)}</strong> — ${esc(i.trade)}, £${i.quote}, ${esc(i.when)}`);
+  notify('tenant', `Booked: ${i.trade} is coming for "${i.title}" — ${i.when}`);
+  notify('trade', `You're booked: "${i.title}" — ${i.when}, agreed £${i.quote}`);
+  renderAll();
+  toast('Booked. Tenant and trade have both been told the date.');
+}
+function openComplete(id){
+  const i=D.issues.find(x=>x.id===id); if(!i)return;
+  T.completeId=id; T.completePhoto=null;
+  const prop=D.props.find(p=>p.id===i.propId);
+  $('complete-job').textContent=`${i.title} — ${prop?prop.addr:''}`;
+  $('c-amt').value=i.quote||95; $('c-note').value=''; $('c-photo-chip').innerHTML=''; $('c-photo').value='';
+  openModal('complete-overlay');
+}
+function confirmComplete(){
+  const i=D.issues.find(x=>x.id===T.completeId); if(!i)return;
+  const amt=parseInt($('c-amt').value,10)||i.quote;
+  i.status='done'; i.invoiceAmt=amt; i.completedAt=nowISO();
+  if(T.completePhoto) i.photos=(i.photos||[]).concat([T.completePhoto]);
+  const note=$('c-note').value.trim();
+  ledger(i.propId,'Trade',`Work completed: <strong>${esc(i.title)}</strong> — invoice £${amt}${note?` · ${esc(note)}`:''} filed by ${esc(i.trade)}`);
+  notify('landlord', `"${i.title}" completed — invoice £${amt} filed by ${i.trade}`);
+  notify('tenant', `"${i.title}" is done — the record has been updated`);
+  closeModal('complete-overlay'); renderAll();
+  toast('Job closed — invoice filed against the property record.');
+}
+function openReview(id){
+  const i=D.issues.find(x=>x.id===id); if(!i)return;
+  T.reviewId=id;
+  $('review-job').textContent=`${i.title} — completed by ${i.trade}`;
+  $('r-text').value='';
+  openModal('review-overlay');
+}
+function confirmReview(){
+  const i=D.issues.find(x=>x.id===T.reviewId); if(!i)return;
+  const stars=segVal('r-seg').length;
+  const text=$('r-text').value.trim()||'Good work, completed as booked.';
+  i.review={stars, text};
+  D.reviews.unshift({stars, text, by:'Landlord · Aberdeen', at:nowISO().slice(0,10), inApp:true});
+  ledger(i.propId,'Landlord',`Review posted: ${'★'.repeat(stars)} for ${esc(i.trade)} — ${esc(i.title)}`);
+  notify('trade', `New review from a landlord: ${'★'.repeat(stars)} — "${text.slice(0,50)}${text.length>50?'…':''}"`);
+  closeModal('review-overlay'); renderAll();
+  toast('Review posted — it now shows on the trade\'s public profile.');
+}
+
+/* ================= Rent ================= */
+function markRent(propId){
+  const pay=D.payments.find(p=>p.propId===propId); if(!pay||pay.paidOn) return;
+  pay.paidOn=nowISO().slice(0,10);
+  const prop=D.props.find(p=>p.id===propId);
+  ledger(propId,'Landlord',`<strong>Rent received</strong> — £${prop.rent} from ${esc(prop.tenant)}, marked by landlord`);
+  renderAll();
+  toast(`Recorded — £${prop.rent} from ${prop.tenant} is on the property record.`);
+}
+function exportRentRecord(){
+  const rows=D.tnRent.map(r=>`<tr><td>${fmtD(r.d)}</td><td>£${r.amt.toFixed(2)}</td><td>${r.ref}</td><td>Paid on time</td></tr>`).join('');
+  const w=window.open('','_blank');
+  if(!w){ toast('Allow pop-ups to export your rent record.'); return; }
+  w.document.write(`<!DOCTYPE html><html><head><title>Rent record — Callum Stewart</title><style>
+    body{font-family:Georgia,serif;color:#1B1B1E;max-width:680px;margin:40px auto;padding:0 24px}
+    h1{font-weight:400;font-size:26px} .sub{color:#6C685E;font-size:14px;margin-top:4px}
+    table{width:100%;border-collapse:collapse;margin-top:28px;font-size:14px;font-family:Arial,sans-serif}
+    th,td{padding:9px 10px;border-bottom:1px solid #E5E1D6;text-align:left}
+    th{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#A09B8E}
+    .foot{margin-top:34px;font-size:12px;color:#A09B8E;border-top:1px solid #E5E1D6;padding-top:14px}
+    .streak{margin-top:20px;font-size:15px;color:#2E7D52;font-weight:bold;font-family:Arial,sans-serif}
+  </style></head><body>
+    <h1>Rent record — Callum Stewart</h1>
+    <div class="sub">12 Rosemount Place, Aberdeen · Private Residential Tenancy since 1 Jul 2024 · Landlord: Moira Fraser (reg. ${D.users.landlord.regNo})</div>
+    <div class="streak">23 of 23 payments on time</div>
+    <table><tr><th>Date</th><th>Amount</th><th>Reference</th><th>Status</th></tr>${rows}</table>
+    <div class="foot">Generated by Slate on ${fmtD(nowISO())} from the shared property record. Each payment above was recorded on the property's append-only ledger at the time it was made. slate.demo</div>
+  </body></html>`);
+  w.document.close();
+  setTimeout(()=>{ try{ w.print(); }catch(e){} }, 350);
+  ledger('p1','Tenant','<strong>Rent record exported</strong> by tenant — portable reference generated');
+  renderAll();
+  toast('Rent record opened — print or save it as a PDF.');
+}
+
+/* ================= Signing ================= */
+async function sha256(s){
+  try{
+    const b=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+    return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
+  }catch(e){
+    let h1=0xdeadbeef, h2=0x41c6ce57;
+    for(let i=0;i<s.length;i++){ const ch=s.charCodeAt(i); h1=Math.imul(h1^ch,2654435761); h2=Math.imul(h2^ch,1597334677); }
+    return 'fnv-'+((h1>>>0).toString(16))+((h2>>>0).toString(16));
+  }
+}
+function openSign(id){
+  const d=D.docs.find(x=>x.id===id); if(!d)return; T.signingDocId=id;
+  $('sign-doc-name').textContent=d.name; $('sign-doc-clause').textContent=d.clause;
+  $('sign-ll-name').textContent=d.sigLL?d.sigLL.name:''; $('sign-ll-label').textContent=d.sigLL?`Signature of landlord — signed ${fmtD(d.sigLL.at)}`:'';
+  $('sign-name').value=''; $('sign-preview').innerHTML='&nbsp;';
+  openModal('sign-overlay'); setTimeout(()=>$('sign-name').focus(),100);
+}
+async function confirmSign(){
+  const n=$('sign-name').value.trim();
+  if(n.length<4){ toast('Type your full name to sign'); return; }
+  const d=D.docs.find(x=>x.id===T.signingDocId); if(!d)return;
+  const hash=await sha256(d.name+'\n'+d.clause);
+  d.sigTN={name:n, at:nowISO(), email:D.users.tenant.email, ua:navigator.userAgent, hash};
+  ledger(d.propId,'Tenant',`<strong>${esc(d.name.split('—')[0].trim())}</strong> signed by ${esc(n)} — fully executed, copy in both vaults`);
+  notify('landlord', `${d.name.split('—')[0].trim()} signed by ${n} — fully executed`);
+  closeModal('sign-overlay'); renderAll();
+  toast('Signed and recorded on Slate. A fully executed copy is in both document vaults.');
+}
+function sigBlock(sig, label){
+  if(!sig) return '';
+  return `<div class="signline" style="font-style:italic">${esc(sig.name)}</div>
+    <div class="signlabel">${label} — signed ${fmtDT(sig.at)}</div>`;
+}
+function viewDoc(id){
+  const d=D.docs.find(x=>x.id===id); if(!d)return;
+  $('copy-name').textContent=d.name; $('copy-kind').textContent=d.kind+' · signed and recorded on Slate';
+  const audit=(sig,who)=>sig?`
+    <div class="ar"><span class="ak">${who}</span><span class="av">${esc(sig.name)} &lt;${esc(sig.email)}&gt;</span></div>
+    <div class="ar"><span class="ak">Signed at</span><span class="av">${fmtDT(sig.at)}</span></div>
+    <div class="ar"><span class="ak">Device</span><span class="av">${esc((sig.ua||'').slice(0,90))}</span></div>
+    <div class="ar"><span class="ak">Document sha-256</span><span class="av">${esc(sig.hash||'')}</span></div>
+    <div class="ar"><span class="ak">IP address</span><span class="av">not captured — recorded server-side in the full product</span></div>`:'';
+  $('copy-paper').innerHTML=`
+    <h4>${esc(d.name)}</h4>
+    <p class="clause">${esc(d.clause)}</p>
+    ${sigBlock(d.sigTN,'Signature of tenant')}
+    ${sigBlock(d.sigLL,'Signature of landlord')}
+    <div class="auditblock"><div class="ah">Signing record</div>${audit(d.sigTN,'Tenant')}${audit(d.sigLL,'Landlord')}</div>`;
+  openModal('copy-overlay');
+}
+function viewCert(id){
+  const c=D.certs.find(x=>x.id===id); if(!c)return;
+  const prop=D.props.find(p=>p.id===c.propId);
+  $('copy-name').textContent=c.name+(c.extra?` — ${c.extra}`:''); $('copy-kind').textContent='Certificate · filed in the property vault';
+  $('copy-paper').innerHTML=`
+    <h4>${esc(c.name)}</h4>
+    <p class="clause">Issued for ${esc(prop?prop.addr:'')}. Filed on the property's shared record. In the full product the original PDF opens here.</p>
+    <div class="auditblock"><div class="ah">Certificate record</div>
+      <div class="ar"><span class="ak">Reference</span><span class="av">${esc(c.ref)}</span></div>
+      <div class="ar"><span class="ak">Valid until</span><span class="av">${fmtD(c.expires)}</span></div>
+      <div class="ar"><span class="ak">Status</span><span class="av">${certStatus(c)==='ok'?'In date':certStatus(c)==='warn'?'Expires within 60 days':'Overdue'}</span></div>
+    </div>`;
+  openModal('copy-overlay');
+}
+
+/* ================= Landlord: send document ================= */
+function fillPropSelect(sel, occupiedOnly){
+  sel.innerHTML=D.props.filter(p=>!occupiedOnly||p.tenant).map(p=>`<option value="${p.id}">${esc(p.addr)}</option>`).join('');
+}
+function openSendDoc(){
+  fillPropSelect($('sd-prop'), true);
+  $('sd-title').value=''; $('sd-clause').value=''; $('sd-sign').value='';
+  openModal('senddoc-overlay');
+}
+async function confirmSendDoc(){
+  const propId=$('sd-prop').value, kind=$('sd-kind').value, title=$('sd-title').value.trim(), clause=$('sd-clause').value.trim(), name=$('sd-sign').value.trim();
+  if(!title){ toast('Give the document a title'); return; }
+  if(!clause){ toast('Add a short summary of the terms'); return; }
+  if(name.length<4){ toast('Type your full name to sign as landlord'); return; }
+  const prop=D.props.find(p=>p.id===propId);
+  const hash=await sha256(title+'\n'+clause);
+  D.docs.unshift({id:uid('d'), propId, name:title, kind, clause,
+    sigLL:{name, at:nowISO(), email:D.users.landlord.email, ua:navigator.userAgent, hash}, sigTN:null});
+  ledger(propId,'Landlord',`<strong>${esc(title.split('—')[0].trim())}</strong> signed by ${esc(name)} — awaiting tenant`);
+  if(propId==='p1') notify('tenant', `A document is waiting for your signature: "${title}"`);
+  closeModal('senddoc-overlay'); renderAll();
+  toast(`Sent to ${prop.tenant} for signature.`);
+}
+
+/* ================= Landlord: certificates ================= */
+function openCertModal(propId){
+  fillPropSelect($('ct-prop'), false);
+  if(propId) $('ct-prop').value=propId;
+  const d=new Date(); d.setFullYear(d.getFullYear()+1);
+  $('ct-exp').value=d.toISOString().slice(0,10);
+  $('ct-file-chip').innerHTML=''; $('ct-file').value='';
+  openModal('cert-overlay');
+}
+function confirmCert(){
+  const propId=$('ct-prop').value, type=$('ct-type').value.replace('&amp;','&'), exp=$('ct-exp').value;
+  if(!exp){ toast('Set the date the certificate is valid until'); return; }
+  const prefix={'Gas Safety (CP12)':'GS','EICR':'EI','EPC':'EP','Smoke & heat alarms (interlinked)':'SC','Legionella risk assessment':'LG'}[type]||'CT';
+  const ref=`${prefix}-${new Date().getFullYear()}-${String(Math.floor(1000+ (D.seq*37)%9000))}`;
+  const existing=D.certs.find(c=>c.propId===propId && c.name===type);
+  if(existing){ existing.expires=exp; existing.ref=ref; }
+  else D.certs.push({id:uid('c'), propId, name:type, expires:exp, ref});
+  const prop=D.props.find(p=>p.id===propId);
+  ledger(propId,'Landlord',`<strong>${esc(type)}</strong> ${existing?'renewed':'filed'} — ${ref}, valid to ${fmtD(exp)}`);
+  if(propId==='p1') notify('tenant', `${type} for your home has been ${existing?'renewed':'filed'} — valid to ${fmtD(exp)}`);
+  closeModal('cert-overlay'); renderAll(); if(T.propId) renderProp();
+  toast(`Filed — compliance for ${prop.addr.split(',')[0]} updated.`);
+}
+function postJobFromCert(certId){
+  const c=D.certs.find(x=>x.id===certId); if(!c)return;
+  const prop=D.props.find(p=>p.id===c.propId);
+  const title=`${c.name} renewal`;
+  D.issues.unshift({id:uid('i'), propId:c.propId, title, desc:`Renewal of ${c.name} (${c.ref}) at ${prop.addr}. Current certificate ${certStatus(c)==='due'?'is overdue':'expires '+fmtD(c.expires)}.`,
+    tenant:'Landlord request', urgency:'Soon', status:'sent', reportedAt:nowISO(), photos:[]});
+  ledger(c.propId,'Landlord',`<strong>${esc(title)}</strong> posted to local trades from the certificate vault`);
+  notify('trade', `New job near you: "${title}" — quote in the app`);
+  renderAll(); if(T.propId) renderProp();
+  toast('Posted — matching trades have been notified.');
+}
+
+/* ================= Landlord: add property ================= */
+function openAddProp(){ $('ap-addr').value=''; $('ap-tenant').value=''; openModal('addprop-overlay'); }
+function confirmAddProp(){
+  const addr=$('ap-addr').value.trim();
+  if(!addr){ toast('Enter the property address'); return; }
+  const rent=parseInt($('ap-rent').value,10)||725;
+  const gas=segVal('ap-gas')==='Yes';
+  const tenant=$('ap-tenant').value.trim()||null;
+  const id=uid('p');
+  D.props.push({id, addr, tenant, tenantSince:tenant?nowISO().slice(0,10):null, rent, gas, deposit:tenant?'SafeDeposits Scotland':null, dist:(Math.round((D.props.length*7)%40)/10)+0.5});
+  if(tenant) D.payments.push({propId:id, month:nowISO().slice(0,7), paidOn:null});
+  D.hist[id]=[2,2,2,2,2,2];
+  ledger(id,'Landlord',`<strong>Property added to Slate</strong> — ${esc(addr)}${tenant?`, tenancy with ${esc(tenant)}`:''}`);
+  closeModal('addprop-overlay'); renderAll();
+  toast('Added — upload its certificates to bring the compliance score up.');
+}
+
+/* ================= Trade profile ================= */
+function openProfile(){
+  $('pf-biz').value=D.profile.biz; $('pf-gs').value=D.profile.gasSafe; $('pf-area').value=D.profile.area; $('pf-rad').value=D.profile.radius;
+  openModal('prof-overlay');
+}
+function confirmProfile(){
+  D.profile.biz=$('pf-biz').value.trim()||D.profile.biz;
+  D.profile.gasSafe=$('pf-gs').value.trim()||D.profile.gasSafe;
+  D.profile.area=$('pf-area').value.trim()||D.profile.area;
+  D.profile.radius=Math.max(1,Math.min(60,parseInt($('pf-rad').value,10)||15));
+  closeModal('prof-overlay'); renderAll();
+  toast('Profile saved.');
+}
+
+/* ================= Legal ================= */
+const LEGAL={
+  privacy:{title:'Privacy policy', body:`<h4>Privacy policy (draft)</h4><p class="clause">Slate processes personal data to perform the contract between you and the platform: keeping a shared, append-only record of a tenancy. In this standalone edition, all data stays in your browser's local storage on this device — nothing is sent to any server.</p><p class="clause" style="margin-top:10px">In the full product: each user can export their data; on account deletion, personal fields are erased and ledger entries are pseudonymised ("Former tenant") because the shared record is the service other parties signed up for. The full policy, with the ICO registration, is published before public launch.</p>`},
+  terms:{title:'Terms of service', body:`<h4>Terms of service (draft)</h4><p class="clause">Slate provides a shared property record for landlords, tenants and trades. Ledger entries are append-only and cannot be edited or deleted by any party. Documents are signed and recorded on Slate with a full signing record; Slate does not provide legal advice. Trade certification numbers are displayed as provided by the trade, unverified, until verification launches. This draft is subject to review by a Scots-qualified solicitor before public launch.</p>`},
+};
+function openLegal(k){ $('legal-title').textContent=LEGAL[k].title; $('legal-body').innerHTML=LEGAL[k].body; openModal('legal-overlay'); }
+
+/* ================= Reset ================= */
+function resetDemo(){
+  if(!confirm('Reset all demo data on this device? This puts everything back to the starting state.')) return;
+  localStorage.removeItem(STORE_KEY);
+  location.reload();
+}
+
+/* ===== Scroll reveal ===== */
+const io=new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} }),{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+/* ===== Boot ===== */
+load();
+renderAll();
+['landlord','tenant','trade'].forEach(r=>{ if(unreadCount(r)>0) $('pip-'+r).classList.add('on'); });
+
+/* ===== PWA ===== */
+if('serviceWorker' in navigator && location.protocol.startsWith('http')){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+</script>
+</body>
+</html>
